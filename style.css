@@ -1,0 +1,68 @@
+body {
+  font-family: Arial;
+  background: #111;
+  color: white;
+  text-align: center;
+}
+
+.logo {
+  width: 360px;
+  margin-bottom: 10px;
+  transition: transform 0.3s;
+}
+
+.logo:hover {
+  transform: scale(1.05);
+}
+
+.container {
+  padding: 20px;
+}
+
+input {
+  margin: 5px;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+}
+
+button {
+  padding: 10px;
+  margin: 10px;
+  border-radius: 8px;
+  border: none;
+  background: #4facfe;
+  color: white;
+  cursor: pointer;
+}
+
+#preview {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 150px);
+  gap: 10px;
+  justify-content: center;
+}
+
+canvas {
+  width: 150px;
+  height: auto;
+  border: 2px dashed #ccc;
+  background: white;
+}
+
+/* Barra de progresso */
+.progresso-container {
+  width: 80%;
+  height: 20px;
+  background: #333;
+  margin: 20px auto;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+#barra {
+  height: 100%;
+  width: 0%;
+  background: #4facfe;
+  transition: width 0.2s;
+}

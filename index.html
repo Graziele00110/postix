@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>PostiX</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <img src="assets/logo.png" alt="PostiX" class="logo">
+</header>
+
+<div class="container">
+
+  <input type="file" id="upload" accept="image/*">
+
+  <div class="inputs">
+    <input type="number" id="larguraCm" placeholder="Largura (cm)">
+    <input type="number" id="alturaCm" placeholder="Altura (cm)">
+    <input type="number" id="margemMm" placeholder="Margem (mm)" value="5">
+  </div>
+
+  <button onclick="gerarPreview()">Gerar Preview</button>
+  <button onclick="gerarPDF()">Baixar PDF</button>
+
+  <!-- Barra de progresso -->
+  <div class="progresso-container">
+    <div id="barra"></div>
+  </div>
+  <p id="status"></p>
+
+  <div id="preview"></div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
