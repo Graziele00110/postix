@@ -37,20 +37,8 @@ async function validarAcesso() {
 
   if (hoje > expira) {
     bloquear("Link expirado");
-    return false;
+    return;
   }
-
-  // limite de usos
-  if (data.usos_atual >= data.usos_max) {
-    bloquear("Limite de acessos atingido");
-    return false;
-  }
-
-  // atualizar uso
-  await window.db
-    .from("tokens")
-    .update({ usos_atual: data.usos_atual + 1 })
-    .eq("id", data.id);
 
   console.log("Acesso liberado");
   return true;
