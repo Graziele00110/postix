@@ -1,4 +1,3 @@
-/* BASE */
 body {
   font-family: Arial;
   background: #111;
@@ -6,7 +5,6 @@ body {
   text-align: center;
 }
 
-/* LOGO */
 .logo {
   width: 360px;
   margin-bottom: 10px;
@@ -17,12 +15,10 @@ body {
   transform: scale(1.05);
 }
 
-/* CONTAINER */
 .container {
   padding: 20px;
 }
 
-/* INPUTS */
 input {
   margin: 5px;
   padding: 10px;
@@ -30,7 +26,6 @@ input {
   border: none;
 }
 
-/* BOTÕES */
 button {
   padding: 10px;
   margin: 10px;
@@ -39,15 +34,8 @@ button {
   background: #fc6d00;
   color: white;
   cursor: pointer;
-  transition: 0.2s;
 }
 
-button:hover {
-  opacity: 0.85;
-  transform: scale(1.03);
-}
-
-/* PREVIEW */
 #preview {
   display: grid;
   grid-template-columns: repeat(auto-fill, 150px);
@@ -62,7 +50,7 @@ canvas {
   background: white;
 }
 
-/* BARRA DE PROGRESSO */
+/* Barra de progresso */
 .progresso-container {
   width: 80%;
   height: 20px;
@@ -77,57 +65,4 @@ canvas {
   width: 0%;
   background: #002a5b;
   transition: width 0.2s;
-}
-
-/* ========================= */
-/* 🔥 ADMIN PANEL (NOVO) */
-/* ========================= */
-
-.box {
-  margin: 20px auto;
-  padding: 15px;
-  background: #1e293b;
-  border-radius: 10px;
-  width: fit-content;
-}
-
-#lista {
-  max-width: 800px;
-  margin: auto;
-}
-
-/* CARD DOS TOKENS */
-.token-card {
-  background: #1e293b;
-  padding: 15px;
-  margin: 10px;
-  border-radius: 10px;
-  text-align: left;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.4);
-}
-
-/* BOTÕES DENTRO DO CARD */
-.token-card button {
-  margin-right: 10px;
-  background: #002a5b;
-}
-
-/* TEXTO */
-.token-card p {
-  margin: 5px 0;
-}
-
-/* RESPONSIVO */
-@media (max-width: 600px) {
-  .logo {
-    width: 200px;
-  }
-
-  canvas {
-    width: 120px;
-  }
-
-  .box {
-    width: 90%;
-  }
 }
