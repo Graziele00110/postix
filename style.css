@@ -274,3 +274,12 @@ body.light .progresso-container {
   user-select: none;
   line-height: 1;
 }
+
+.ver-senha svg {
+  color: #ccc;
+  transition: 0.2s;
+}
+
+.ver-senha:hover svg {
+  color: #fc6d00;
+}
