@@ -1,7 +1,7 @@
 // =========================
 // CONFIG
 // =========================
-const API_URL = "http://https://postix-api.onrender.com"; // troque depois pelo Render
+const API_URL = "https://postix-api.onrender.com"; // troque depois pelo Render
 
 let imagemOriginal = null;
 let partes = [];
