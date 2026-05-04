@@ -18,9 +18,14 @@ db.serialize(() => {
       email TEXT UNIQUE NOT NULL,
       password TEXT NOT NULL,
       devices TEXT DEFAULT '[]',
+      plan_months INTEGER DEFAULT 3,
+      expires_at TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
+  db.run(`ALTER TABLE users ADD COLUMN plan_months INTEGER DEFAULT 3`, () => {});
+  db.run(`ALTER TABLE users ADD COLUMN expires_at TEXT`, () => {});
 });
 
 function verificarAdmin(req, res, next) {
@@ -33,6 +38,18 @@ function verificarAdmin(req, res, next) {
   next();
 }
 
+function calcularExpiracao(meses) {
+  const data = new Date();
+  data.setMonth(data.getMonth() + Number(meses));
+  return data.toISOString();
+}
+
+function planoExpirado(expiresAt) {
+  if (!expiresAt) return true;
+  return new Date() > new Date(expiresAt);
+}
+
+// LOGIN DO CLIENTE
 app.post("/login", (req, res) => {
   const { email, password, deviceId } = req.body;
 
@@ -47,7 +64,19 @@ app.post("/login", (req, res) => {
       return res.status(401).json({ error: "Email ou senha inválidos." });
     }
 
-    let devices = JSON.parse(user.devices || "[]");
+    if (planoExpirado(user.expires_at)) {
+      return res.status(403).json({
+        error: "Seu plano expirou. Renove para continuar usando o PostiX."
+      });
+    }
+
+    let devices = [];
+
+    try {
+      devices = JSON.parse(user.devices || "[]");
+    } catch {
+      devices = [];
+    }
 
     if (!devices.includes(deviceId)) {
       if (devices.length >= 2) {
@@ -62,61 +91,135 @@ app.post("/login", (req, res) => {
     db.run(
       "UPDATE users SET devices = ? WHERE id = ?",
       [JSON.stringify(devices), user.id],
-      () => {
+      err => {
+        if (err) {
+          return res.status(500).json({ error: "Erro ao salvar dispositivo." });
+        }
+
         const token = crypto.randomBytes(32).toString("hex");
-        res.json({ success: true, token });
+
+        res.json({
+          success: true,
+          token,
+          expires_at: user.expires_at,
+          plan_months: user.plan_months
+        });
       }
     );
   });
 });
 
+// CRIAR USUÁRIO COM PLANO
 app.post("/admin/criar", verificarAdmin, (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, plan_months } = req.body;
 
-  if (!email || !password) {
-    return res.status(400).json({ error: "Email e senha são obrigatórios." });
+  if (!email || !password || !plan_months) {
+    return res.status(400).json({ error: "Email, senha e plano são obrigatórios." });
   }
 
+  const mesesPermitidos = [3, 6, 12];
+
+  if (!mesesPermitidos.includes(Number(plan_months))) {
+    return res.status(400).json({ error: "Plano inválido." });
+  }
+
+  const expiresAt = calcularExpiracao(plan_months);
+
   db.run(
-    "INSERT INTO users (email, password, devices) VALUES (?, ?, ?)",
-    [email, password, "[]"],
+    "INSERT INTO users (email, password, devices, plan_months, expires_at) VALUES (?, ?, ?, ?, ?)",
+    [email, password, "[]", plan_months, expiresAt],
     err => {
       if (err) return res.status(400).json({ error: "Usuário já existe." });
-      res.json({ success: true, message: "Usuário criado com sucesso." });
+
+      res.json({
+        success: true,
+        message: "Usuário criado com sucesso.",
+        expires_at: expiresAt
+      });
     }
   );
 });
 
+// LISTAR USUÁRIOS
 app.get("/admin/usuarios", verificarAdmin, (req, res) => {
-  db.all("SELECT id, email, devices, created_at FROM users ORDER BY id DESC", [], (err, rows) => {
-    if (err) return res.status(500).json({ error: "Erro ao listar usuários." });
+  db.all(
+    "SELECT id, email, devices, plan_months, expires_at, created_at FROM users ORDER BY id DESC",
+    [],
+    (err, rows) => {
+      if (err) return res.status(500).json({ error: "Erro ao listar usuários." });
 
-    const usuarios = rows.map(user => ({
-      id: user.id,
-      email: user.email,
-      dispositivos: JSON.parse(user.devices || "[]").length,
-      criadoEm: user.created_at
-    }));
+      const usuarios = rows.map(user => {
+        let devices = [];
 
-    res.json(usuarios);
-  });
+        try {
+          devices = JSON.parse(user.devices || "[]");
+        } catch {
+          devices = [];
+        }
+
+        return {
+          id: user.id,
+          email: user.email,
+          dispositivos: devices.length,
+          plano: `${user.plan_months} meses`,
+          expires_at: user.expires_at,
+          expirado: planoExpirado(user.expires_at),
+          criadoEm: user.created_at
+        };
+      });
+
+      res.json(usuarios);
+    }
+  );
 });
 
-app.delete("/admin/usuarios/:id", verificarAdmin, (req, res) => {
+// RENOVAR PLANO
+app.post("/admin/renovar/:id", verificarAdmin, (req, res) => {
   const { id } = req.params;
+  const { plan_months } = req.body;
 
-  db.run("DELETE FROM users WHERE id = ?", [id], err => {
-    if (err) return res.status(500).json({ error: "Erro ao excluir usuário." });
-    res.json({ success: true, message: "Usuário excluído." });
-  });
+  const mesesPermitidos = [3, 6, 12];
+
+  if (!mesesPermitidos.includes(Number(plan_months))) {
+    return res.status(400).json({ error: "Plano inválido." });
+  }
+
+  const expiresAt = calcularExpiracao(plan_months);
+
+  db.run(
+    "UPDATE users SET plan_months = ?, expires_at = ? WHERE id = ?",
+    [plan_months, expiresAt, id],
+    err => {
+      if (err) return res.status(500).json({ error: "Erro ao renovar plano." });
+
+      res.json({
+        success: true,
+        message: "Plano renovado com sucesso.",
+        expires_at: expiresAt
+      });
+    }
+  );
 });
 
+// RESETAR DISPOSITIVOS
 app.post("/admin/resetar-dispositivos/:id", verificarAdmin, (req, res) => {
   const { id } = req.params;
 
   db.run("UPDATE users SET devices = ? WHERE id = ?", ["[]", id], err => {
     if (err) return res.status(500).json({ error: "Erro ao resetar dispositivos." });
+
     res.json({ success: true, message: "Dispositivos resetados." });
+  });
+});
+
+// EXCLUIR USUÁRIO
+app.delete("/admin/usuarios/:id", verificarAdmin, (req, res) => {
+  const { id } = req.params;
+
+  db.run("DELETE FROM users WHERE id = ?", [id], err => {
+    if (err) return res.status(500).json({ error: "Erro ao excluir usuário." });
+
+    res.json({ success: true, message: "Usuário excluído." });
   });
 });
 
