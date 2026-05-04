@@ -1,6 +1,38 @@
 let imagemOriginal = null;
 let partes = [];
 
+//botao noturno/diurno
+const btn = document.getElementById("toggleTema");
+
+btn.onclick = () => {
+  document.body.classList.toggle("light");
+
+  // muda o ícone
+  if (document.body.classList.contains("light")) {
+    btn.innerText = "☀️";
+  } else {
+    btn.innerText = "🌙";
+  }
+};
+
+// carregar preferência
+if (localStorage.getItem("tema") === "light") {
+  document.body.classList.add("light");
+  btn.innerText = "☀️";
+}
+
+btn.onclick = () => {
+  document.body.classList.toggle("light");
+
+  if (document.body.classList.contains("light")) {
+    btn.innerText = "☀️";
+    localStorage.setItem("tema", "light");
+  } else {
+    btn.innerText = "🌙";
+    localStorage.setItem("tema", "dark");
+  }
+};
+
 const DPI = 150;
 
 function cmParaMm(cm) {
