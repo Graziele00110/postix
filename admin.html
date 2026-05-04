@@ -93,6 +93,12 @@
   <input type="email" id="email" placeholder="Email do cliente">
   <input type="text" id="senha" placeholder="Senha do cliente">
 
+  <select id="plano">
+    <option value="3">Plano 3 meses - R$29,90</option>
+    <option value="6">Plano 6 meses - R$49,90</option>
+    <option value="12">Plano 12 meses - R$79,90</option>
+  </select>
+
   <button onclick="criarUsuario()">Criar acesso</button>
 </div>
 
@@ -107,6 +113,9 @@
         <th>ID</th>
         <th>Email</th>
         <th>Dispositivos</th>
+        <th>Plano</th>
+        <th>Vencimento</th>
+        <th>Status</th>
         <th>Criado em</th>
         <th>Ações</th>
       </tr>
@@ -143,9 +152,10 @@ function mostrarMsg(texto) {
 async function criarUsuario() {
   const email = document.getElementById("email").value.trim();
   const senha = document.getElementById("senha").value.trim();
+  const plano = document.getElementById("plano").value;
 
-  if (!email || !senha) {
-    mostrarMsg("Preencha email e senha.");
+  if (!email || !senha || !plano) {
+    mostrarMsg("Preencha email, senha e plano.");
     return;
   }
 
@@ -158,7 +168,8 @@ async function criarUsuario() {
       },
       body: JSON.stringify({
         email,
-        password: senha
+        password: senha,
+        plan_months: Number(plano)
       })
     });
 
@@ -205,10 +216,17 @@ async function listarUsuarios() {
         <td>${user.id}</td>
         <td>${user.email}</td>
         <td>${user.dispositivos}/2</td>
+        <td>${user.plano}</td>
+        <td>${formatarData(user.expires_at)}</td>
+        <td>${user.expirado ? "Expirado" : "Ativo"}</td>
         <td>${user.criadoEm || "-"}</td>
         <td>
           <button class="reset" onclick="resetarDispositivos(${user.id})">
             Resetar dispositivos
+          </button>
+
+          <button onclick="renovarPlano(${user.id})">
+            Renovar
           </button>
 
           <button class="danger" onclick="excluirUsuario(${user.id})">
@@ -256,6 +274,38 @@ async function excluirUsuario(id) {
 
   listarUsuarios();
 }
+
+function formatarData(dataISO) {
+  if (!dataISO) return "-";
+
+  return new Date(dataISO).toLocaleDateString("pt-BR");
+}
+
+async function renovarPlano(id) {
+  const plano = prompt("Digite o novo plano em meses: 3, 6 ou 12");
+
+  if (!["3", "6", "12"].includes(plano)) {
+    alert("Plano inválido.");
+    return;
+  }
+
+  const res = await fetch(`${API_URL}/admin/renovar/${id}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-admin-key": getAdminKey()
+    },
+    body: JSON.stringify({
+      plan_months: Number(plano)
+    })
+  });
+
+  const data = await res.json();
+
+  mostrarMsg(data.message || data.error);
+  listarUsuarios();
+}
+  
 </script>
 
 </body>
