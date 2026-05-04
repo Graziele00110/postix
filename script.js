@@ -1,10 +1,23 @@
+// =====================
+// 🔐 SUPABASE CONFIG
+// =====================
+const supabase = window.supabase.createClient(
+  "https://SEU_PROJETO.supabase.co",
+  "SUA_PUBLIC_KEY"
+);
+
+window.db = supabase;
+
+// =====================
+// 🔒 VALIDAÇÃO DE ACESSO
+// =====================
 async function validarAcesso() {
   const params = new URLSearchParams(window.location.search);
   const token = params.get("token");
 
   if (!token) {
     bloquear("Link inválido");
-    return;
+    return false;
   }
 
   const { data, error } = await window.db
@@ -15,31 +28,32 @@ async function validarAcesso() {
 
   if (error || !data) {
     bloquear("Token não encontrado");
-    return;
+    return false;
   }
 
-  // já usado?
-  if (data.usado) {
-    bloquear("Link já utilizado");
-    return;
-  }
-
-  // expirado?
+  // expirado
   const hoje = new Date();
   const expira = new Date(data.expira);
 
   if (hoje > expira) {
     bloquear("Link expirado");
-    return;
+    return false;
   }
 
-  // marcar como usado
+  // limite de usos
+  if (data.usos_atual >= data.usos_max) {
+    bloquear("Limite de acessos atingido");
+    return false;
+  }
+
+  // atualizar uso
   await window.db
     .from("tokens")
-    .update({ usado: true })
+    .update({ usos_atual: data.usos_atual + 1 })
     .eq("id", data.id);
 
   console.log("Acesso liberado");
+  return true;
 }
 
 function bloquear(msg) {
@@ -50,9 +64,15 @@ function bloquear(msg) {
   `;
 }
 
+// =====================
+// 🚀 INICIAR SISTEMA
+// =====================
 validarAcesso();
 
-// Começa aqui
+// =====================
+// 🎨 SEU SISTEMA DE POSTER
+// =====================
+
 let imagemOriginal = null;
 let partes = [];
 
@@ -95,7 +115,6 @@ function gerarPreview() {
   const larguraPxFinal = mmParaPx(larguraMm);
   const alturaPxFinal = mmParaPx(alturaMm);
 
-  // Redimensiona imagem
   const tempCanvas = document.createElement("canvas");
   tempCanvas.width = larguraPxFinal;
   tempCanvas.height = alturaPxFinal;
