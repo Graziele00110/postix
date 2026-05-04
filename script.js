@@ -3,96 +3,164 @@ const API_URL = "https://postix-api.onrender.com";
 let imagemOriginal = null;
 let partes = [];
 
+const DPI = 150;
+
+const formatos = {
+  A5: { w: 148, h: 210 },
+  A4: { w: 210, h: 297 },
+  A3: { w: 297, h: 420 },
+  A2: { w: 420, h: 594 },
+  A1: { w: 594, h: 841 }
+};
+
+const mmToPx = mm => (mm / 25.4) * DPI;
+
+const btnTema = document.getElementById("toggleTema");
+const loginArea = document.getElementById("loginArea");
+const appArea = document.getElementById("app");
+const loginMensagem = document.getElementById("loginMensagem");
+
 const upload = document.getElementById("upload");
-const preview = document.getElementById("preview");
-const barra = document.getElementById("barra");
-const status = document.getElementById("status");
+const larguraCmInput = document.getElementById("larguraCm");
+const alturaCmInput = document.getElementById("alturaCm");
+const formatoSelect = document.getElementById("formato");
+const orientacaoSelect = document.getElementById("orientacao");
+const margemMmInput = document.getElementById("margemMm");
+const bleedMmInput = document.getElementById("bleedMm");
+const popupOverlay = document.getElementById("popupOverlay");
 
-/* 👁️ mostrar senha */
-function alternarSenha() {
-  const senha = document.getElementById("senhaLogin");
-  const btn = document.querySelector(".ver-senha");
-
-  if (senha.type === "password") {
-    senha.type = "text";
-    btn.innerText = "🙈";
-  } else {
-    senha.type = "password";
-    btn.innerText = "👁️";
-  }
+/* TEMA */
+if (localStorage.getItem("tema") === "light") {
+  document.body.classList.add("light");
+  btnTema.innerText = "☀️";
 }
 
-/* login */
+btnTema.onclick = () => {
+  document.body.classList.toggle("light");
+
+  if (document.body.classList.contains("light")) {
+    btnTema.innerText = "☀️";
+    localStorage.setItem("tema", "light");
+  } else {
+    btnTema.innerText = "🌙";
+    localStorage.setItem("tema", "dark");
+  }
+};
+
+/* LOGIN */
+function gerarDeviceId() {
+  let deviceId = localStorage.getItem("postix_device_id");
+
+  if (!deviceId) {
+    deviceId = crypto.randomUUID();
+    localStorage.setItem("postix_device_id", deviceId);
+  }
+
+  return deviceId;
+}
+
+function liberarSistema() {
+  loginArea.style.display = "none";
+  appArea.style.display = "block";
+}
+
+function bloquearSistema() {
+  loginArea.style.display = "block";
+  appArea.style.display = "none";
+}
+
 async function fazerLogin() {
-  const email = emailLogin.value;
-  const senha = senhaLogin.value;
+  const email = document.getElementById("emailLogin").value.trim();
+  const senha = document.getElementById("senhaLogin").value.trim();
 
-  const res = await fetch(API_URL + "/login", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({
-      email,
-      password: senha,
-      deviceId: localStorage.deviceId || (localStorage.deviceId = crypto.randomUUID())
-    })
-  });
-
-  const data = await res.json();
-
-  if (!res.ok) {
-    loginMensagem.innerText = data.error;
+  if (!email || !senha) {
+    loginMensagem.innerText = "Preencha email e senha.";
     return;
   }
 
-  localStorage.logado = true;
-  loginArea.style.display = "none";
-  app.style.display = "block";
+  loginMensagem.innerText = "Verificando acesso...";
+
+  try {
+    const resposta = await fetch(`${API_URL}/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        email,
+        password: senha,
+        deviceId: gerarDeviceId()
+      })
+    });
+
+    const dados = await resposta.json();
+
+    if (!resposta.ok) {
+      loginMensagem.innerText = dados.error || "Erro ao fazer login.";
+      return;
+    }
+
+    localStorage.setItem("postix_logado", "true");
+    localStorage.setItem("postix_email", email);
+    localStorage.setItem("postix_token", dados.token);
+
+    loginMensagem.innerText = "";
+    liberarSistema();
+
+  } catch (error) {
+    loginMensagem.innerText = "Erro ao conectar com o servidor.";
+  }
 }
 
-/* sair */
 function sair() {
-  localStorage.clear();
-  location.reload();
+  localStorage.removeItem("postix_logado");
+  localStorage.removeItem("postix_email");
+  localStorage.removeItem("postix_token");
+  bloquearSistema();
 }
 
-/* upload */
-upload.onchange = e => {
-  const img = new Image();
-  img.onload = () => imagemOriginal = img;
-  img.src = URL.createObjectURL(e.target.files[0]);
-};
+window.addEventListener("load", () => {
+  if (localStorage.getItem("postix_logado") === "true") {
+    liberarSistema();
+  } else {
+    bloquearSistema();
+  }
+});
 
-/* preview */
+/* UPLOAD */
+upload.addEventListener("change", e => {
+  const file = e.target.files[0];
+
+  if (!file) return;
+
+  const img = new Image();
+
+  img.onload = () => {
+    imagemOriginal = img;
+    document.getElementById("status").innerText = "Imagem carregada com sucesso.";
+  };
+
+  img.src = URL.createObjectURL(file);
+});
+
+/* PREVIEW */
 function gerarPreview() {
   if (!imagemOriginal) {
     alert("Envie uma imagem!");
     return;
   }
 
-  const larguraCm = parseFloat(document.getElementById("larguraCm").value);
-  const alturaCm = parseFloat(document.getElementById("alturaCm").value);
+  const larguraCm = parseFloat(larguraCmInput.value);
+  const alturaCm = parseFloat(alturaCmInput.value);
+  const formato = formatoSelect.value;
+  const orientacao = orientacaoSelect.value;
+  const margemMm = parseFloat(margemMmInput.value) || 0;
+  const bleedMm = parseFloat(bleedMmInput.value) || 0;
 
   if (!larguraCm || !alturaCm) {
-    alert("Preencha largura e altura!");
+    alert("Preencha largura e altura do poster!");
     return;
   }
-
-  const formato = document.getElementById("formato").value;
-  const orientacao = document.getElementById("orientacao").value;
-
-  const margemMm = parseFloat(document.getElementById("margemMm").value) || 0;
-  const bleedMm = parseFloat(document.getElementById("bleedMm").value) || 0;
-
-  const formatos = {
-    A5: { w: 148, h: 210 },
-    A4: { w: 210, h: 297 },
-    A3: { w: 297, h: 420 },
-    A2: { w: 420, h: 594 },
-    A1: { w: 594, h: 841 }
-  };
-
-  const DPI = 150;
-  const mmToPx = mm => (mm / 25.4) * DPI;
 
   let folha = formatos[formato];
   let folhaW = folha.w;
@@ -102,25 +170,25 @@ function gerarPreview() {
     [folhaW, folhaH] = [folhaH, folhaW];
   }
 
+  const larguraPosterPx = mmToPx(larguraCm * 10);
+  const alturaPosterPx = mmToPx(alturaCm * 10);
+
   const folhaWpx = mmToPx(folhaW);
   const folhaHpx = mmToPx(folhaH);
 
-  const larguraPx = mmToPx(larguraCm * 10);
-  const alturaPx = mmToPx(alturaCm * 10);
-
   const tempCanvas = document.createElement("canvas");
-  tempCanvas.width = larguraPx;
-  tempCanvas.height = alturaPx;
+  tempCanvas.width = larguraPosterPx;
+  tempCanvas.height = alturaPosterPx;
 
   const tempCtx = tempCanvas.getContext("2d");
-  tempCtx.drawImage(imagemOriginal, 0, 0, larguraPx, alturaPx);
+  tempCtx.drawImage(imagemOriginal, 0, 0, larguraPosterPx, alturaPosterPx);
 
   const preview = document.getElementById("preview");
   preview.innerHTML = "";
   partes = [];
 
-  const cols = Math.ceil(larguraPx / folhaWpx);
-  const rows = Math.ceil(alturaPx / folhaHpx);
+  const cols = Math.ceil(larguraPosterPx / folhaWpx);
+  const rows = Math.ceil(alturaPosterPx / folhaHpx);
 
   const margemPx = mmToPx(margemMm);
   const bleedPx = mmToPx(bleedMm);
@@ -139,7 +207,6 @@ function gerarPreview() {
 
       const areaX = margemPx + bleedPx;
       const areaY = margemPx + bleedPx;
-
       const areaW = folhaWpx - areaX * 2;
       const areaH = folhaHpx - areaY * 2;
 
@@ -156,46 +223,102 @@ function gerarPreview() {
       );
 
       ctx.strokeStyle = "black";
+      ctx.lineWidth = 2;
       ctx.strokeRect(areaX, areaY, areaW, areaH);
 
-      partes.push({ canvas, folhaW, folhaH });
+      partes.push({
+        canvas,
+        folhaW,
+        folhaH
+      });
+
       preview.appendChild(canvas);
     }
   }
 
   document.getElementById("status").innerText =
-    `${partes.length} páginas geradas.`;
+    `Preview gerado: ${partes.length} página(s).`;
 }
 
 /* PDF */
-function gerarPDF() {
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF();
+async function gerarPDF() {
+  if (partes.length === 0) {
+    alert("Gere o preview primeiro!");
+    return;
+  }
 
-  partes.forEach((c, i) => {
-    if (i > 0) pdf.addPage();
-    pdf.addImage(c.toDataURL(), "JPEG", 0, 0, 210, 297);
+  const { jsPDF } = window.jspdf;
+
+  const primeira = partes[0];
+
+  const pdf = new jsPDF({
+    unit: "mm",
+    format: [primeira.folhaW, primeira.folhaH]
   });
 
+  const barra = document.getElementById("barra");
+  const status = document.getElementById("status");
+
+  for (let i = 0; i < partes.length; i++) {
+    const progresso = Math.round((i / partes.length) * 100);
+
+    barra.style.width = progresso + "%";
+    status.innerText = `Gerando PDF... ${progresso}%`;
+
+    await new Promise(resolve => setTimeout(resolve, 5));
+
+    if (i > 0) {
+      pdf.addPage([partes[i].folhaW, partes[i].folhaH]);
+    }
+
+    const imgData = partes[i].canvas.toDataURL("image/jpeg", 0.8);
+
+    pdf.addImage(
+      imgData,
+      "JPEG",
+      0,
+      0,
+      partes[i].folhaW,
+      partes[i].folhaH
+    );
+  }
+
+  barra.style.width = "100%";
+  status.innerText = "Finalizando...";
+
   pdf.save("postix.pdf");
+
+  status.innerText = "Download concluído!";
 }
 
-/* limpar */
-function limparTudo() {
-  if (!confirm("Limpar tudo?")) return;
-
-  upload.value = "";
-  preview.innerHTML = "";
-  partes = [];
-  status.innerText = "";
-  barra.style.width = "0%";
-}
-
-/* popup */
+/* POPUP */
 function abrirPopup() {
   popupOverlay.style.display = "flex";
 }
 
 function fecharPopup() {
   popupOverlay.style.display = "none";
+}
+
+popupOverlay.addEventListener("click", e => {
+  if (e.target === popupOverlay) {
+    fecharPopup();
+  }
+});
+
+/* 👁️ VISUALIZAR SENHA */
+function alternarSenha() {
+  const input = document.getElementById("senhaLogin");
+  const eye = document.getElementById("iconEye");
+  const eyeOff = document.getElementById("iconEyeOff");
+
+  if (input.type === "password") {
+    input.type = "text";
+    eye.style.display = "none";
+    eyeOff.style.display = "block";
+  } else {
+    input.type = "password";
+    eye.style.display = "block";
+    eyeOff.style.display = "none";
+  }
 }
