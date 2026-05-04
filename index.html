@@ -13,7 +13,7 @@
 <!-- LOGIN -->
 <div id="loginArea" class="login-area glass">
 
-  <img src="assets/logo.png" class="logo-login">
+  <img src="assets/logo.png" class="logo-login" alt="PostiX">
 
   <h2>Acesso ao PostiX</h2>
 
@@ -21,9 +21,29 @@
 
   <!-- SENHA COM OLHO -->
   <div class="senha-box">
-    <input type="password" id="senhaLogin" placeholder="Senha">
-    <button type="button" class="ver-senha" onclick="alternarSenha()">👁️</button>
-  </div>
+  <input type="password" id="senhaLogin" placeholder="Senha">
+  <span class="ver-senha" onclick="alternarSenha()">
+
+  <!-- OLHO ABERTO -->
+  <svg id="iconEye" xmlns="http://www.w3.org/2000/svg" 
+       width="20" height="20" viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+    <circle cx="12" cy="12" r="3"/>
+  </svg>
+
+  <!-- OLHO FECHADO -->
+  <svg id="iconEyeOff" xmlns="http://www.w3.org/2000/svg" 
+       width="20" height="20" viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+       style="display:none;">
+    <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a21.77 21.77 0 0 1 5.06-5.94"/>
+    <path d="M1 1l22 22"/>
+    <path d="M9.88 9.88A3 3 0 0 0 12 15a3 3 0 0 0 2.12-.88"/>
+  </svg>
+
+</span>
+</div>
 
   <button onclick="fazerLogin()">Entrar</button>
 
@@ -35,13 +55,13 @@
 <div id="app" style="display:none;">
 
 <header>
-  <img src="assets/logo.png" class="logo">
+  <img src="assets/logo.png" class="logo" alt="PostiX">
 </header>
 
 <div class="container glass">
 
   <div class="upload-box">
-    <input type="file" id="upload">
+    <input type="file" id="upload" accept="image/*">
   </div>
 
   <div class="inputs">
@@ -62,7 +82,7 @@
       <option value="landscape">Paisagem</option>
     </select>
 
-    <input type="number" id="margemMm" value="5">
+    <input type="number" id="margemMm" value="5" placeholder="Margem (mm)">
 
     <div class="campo">
       <label>
