@@ -1,66 +1,3 @@
-// =====================
-// 🔐 SUPABASE CONFIG
-// =====================
-const supabase = window.supabase.createClient(
-  "https://SEU_PROJETO.supabase.co",
-  "SUA_PUBLIC_KEY"
-);
-
-window.db = supabase;
-
-// =====================
-// 🔒 VALIDAÇÃO DE ACESSO
-// =====================
-async function validarAcesso() {
-  const params = new URLSearchParams(window.location.search);
-  const token = params.get("token");
-
-  if (!token) {
-    bloquear("Link inválido");
-    return false;
-  }
-
-  const { data, error } = await window.db
-    .from("tokens")
-    .select("*")
-    .eq("token", token)
-    .single();
-
-  if (error || !data) {
-    bloquear("Token não encontrado");
-    return false;
-  }
-
-  // expirado
-  const hoje = new Date();
-  const expira = new Date(data.expira);
-
-  if (hoje > expira) {
-    bloquear("Link expirado");
-    return;
-  }
-
-  console.log("Acesso liberado");
-  return true;
-}
-
-function bloquear(msg) {
-  document.body.innerHTML = `
-    <div style="text-align:center; padding:50px;">
-      <h1>${msg}</h1>
-    </div>
-  `;
-}
-
-// =====================
-// 🚀 INICIAR SISTEMA
-// =====================
-validarAcesso();
-
-// =====================
-// 🎨 SEU SISTEMA DE POSTER
-// =====================
-
 let imagemOriginal = null;
 let partes = [];
 
@@ -103,6 +40,7 @@ function gerarPreview() {
   const larguraPxFinal = mmParaPx(larguraMm);
   const alturaPxFinal = mmParaPx(alturaMm);
 
+  // Redimensiona imagem
   const tempCanvas = document.createElement("canvas");
   tempCanvas.width = larguraPxFinal;
   tempCanvas.height = alturaPxFinal;
