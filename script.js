@@ -3,7 +3,7 @@ const API_URL = "https://postix-api.onrender.com";
 let imagemOriginal = null;
 let partes = [];
 
-const DPI = 150;
+const DPI = 300;
 
 const formatos = {
   A5: { w: 148, h: 210 },
@@ -271,7 +271,7 @@ async function gerarPDF() {
       pdf.addPage([partes[i].folhaW, partes[i].folhaH]);
     }
 
-    const imgData = partes[i].canvas.toDataURL("image/jpeg", 0.8);
+    const imgData = partes[i].canvas.toDataURL("image/jpeg", 0.95);
 
     pdf.addImage(
       imgData,
