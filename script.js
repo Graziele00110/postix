@@ -1,160 +1,286 @@
+const API_URL = "http://localhost:3000";
+
 let imagemOriginal = null;
 let partes = [];
 
-//botao noturno/diurno
-const btn = document.getElementById("toggleTema");
+const DPI = 150;
 
-btn.onclick = () => {
-  document.body.classList.toggle("light");
-
-  // muda o ícone
-  if (document.body.classList.contains("light")) {
-    btn.innerText = "☀️";
-  } else {
-    btn.innerText = "🌙";
-  }
+const formatos = {
+  A5: { w: 148, h: 210 },
+  A4: { w: 210, h: 297 },
+  A3: { w: 297, h: 420 },
+  A2: { w: 420, h: 594 },
+  A1: { w: 594, h: 841 }
 };
 
-// carregar preferência
+const mmToPx = mm => (mm / 25.4) * DPI;
+
+const btnTema = document.getElementById("toggleTema");
+const loginArea = document.getElementById("loginArea");
+const appArea = document.getElementById("app");
+const loginMensagem = document.getElementById("loginMensagem");
+
+const upload = document.getElementById("upload");
+const larguraCmInput = document.getElementById("larguraCm");
+const alturaCmInput = document.getElementById("alturaCm");
+const formatoSelect = document.getElementById("formato");
+const orientacaoSelect = document.getElementById("orientacao");
+const margemMmInput = document.getElementById("margemMm");
+const bleedMmInput = document.getElementById("bleedMm");
+const popupOverlay = document.getElementById("popupOverlay");
+
+/* TEMA */
 if (localStorage.getItem("tema") === "light") {
   document.body.classList.add("light");
-  btn.innerText = "☀️";
+  btnTema.innerText = "☀️";
 }
 
-btn.onclick = () => {
+btnTema.onclick = () => {
   document.body.classList.toggle("light");
 
   if (document.body.classList.contains("light")) {
-    btn.innerText = "☀️";
+    btnTema.innerText = "☀️";
     localStorage.setItem("tema", "light");
   } else {
-    btn.innerText = "🌙";
+    btnTema.innerText = "🌙";
     localStorage.setItem("tema", "dark");
   }
 };
 
-const DPI = 150;
+/* LOGIN */
+function gerarDeviceId() {
+  let deviceId = localStorage.getItem("postix_device_id");
 
-function cmParaMm(cm) {
-  return cm * 10;
+  if (!deviceId) {
+    deviceId = crypto.randomUUID();
+    localStorage.setItem("postix_device_id", deviceId);
+  }
+
+  return deviceId;
 }
 
-function mmParaPx(mm) {
-  return (mm / 25.4) * DPI;
+function liberarSistema() {
+  loginArea.style.display = "none";
+  appArea.style.display = "block";
 }
 
-document.getElementById("upload").addEventListener("change", function(e) {
+function bloquearSistema() {
+  loginArea.style.display = "block";
+  appArea.style.display = "none";
+}
+
+async function fazerLogin() {
+  const email = document.getElementById("emailLogin").value.trim();
+  const senha = document.getElementById("senhaLogin").value.trim();
+
+  if (!email || !senha) {
+    loginMensagem.innerText = "Preencha email e senha.";
+    return;
+  }
+
+  loginMensagem.innerText = "Verificando acesso...";
+
+  try {
+    const resposta = await fetch(`${API_URL}/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        email,
+        password: senha,
+        deviceId: gerarDeviceId()
+      })
+    });
+
+    const dados = await resposta.json();
+
+    if (!resposta.ok) {
+      loginMensagem.innerText = dados.error || "Erro ao fazer login.";
+      return;
+    }
+
+    localStorage.setItem("postix_logado", "true");
+    localStorage.setItem("postix_email", email);
+    localStorage.setItem("postix_token", dados.token);
+
+    loginMensagem.innerText = "";
+    liberarSistema();
+
+  } catch (error) {
+    loginMensagem.innerText = "Erro ao conectar com o servidor.";
+  }
+}
+
+function sair() {
+  localStorage.removeItem("postix_logado");
+  localStorage.removeItem("postix_email");
+  localStorage.removeItem("postix_token");
+  bloquearSistema();
+}
+
+window.addEventListener("load", () => {
+  if (localStorage.getItem("postix_logado") === "true") {
+    liberarSistema();
+  } else {
+    bloquearSistema();
+  }
+});
+
+/* UPLOAD */
+upload.addEventListener("change", e => {
   const file = e.target.files[0];
+
+  if (!file) return;
+
   const img = new Image();
 
-  img.onload = function() {
+  img.onload = () => {
     imagemOriginal = img;
+    document.getElementById("status").innerText = "Imagem carregada com sucesso.";
   };
 
   img.src = URL.createObjectURL(file);
 });
 
+/* PREVIEW */
 function gerarPreview() {
-  if (!imagemOriginal) return alert("Envie uma imagem!");
-
-  const larguraCm = parseFloat(document.getElementById("larguraCm").value);
-  const alturaCm = parseFloat(document.getElementById("alturaCm").value);
-  const margemMm = parseFloat(document.getElementById("margemMm").value) || 5;
-
-  if (!larguraCm || !alturaCm) {
-    alert("Preencha largura e altura!");
+  if (!imagemOriginal) {
+    alert("Envie uma imagem!");
     return;
   }
 
-  const larguraMm = cmParaMm(larguraCm);
-  const alturaMm = cmParaMm(alturaCm);
+  const larguraCm = parseFloat(larguraCmInput.value);
+  const alturaCm = parseFloat(alturaCmInput.value);
+  const formato = formatoSelect.value;
+  const orientacao = orientacaoSelect.value;
+  const margemMm = parseFloat(margemMmInput.value) || 0;
+  const bleedMm = parseFloat(bleedMmInput.value) || 0;
 
-  const larguraPxFinal = mmParaPx(larguraMm);
-  const alturaPxFinal = mmParaPx(alturaMm);
+  if (!larguraCm || !alturaCm) {
+    alert("Preencha largura e altura do poster!");
+    return;
+  }
 
-  // Redimensiona imagem
+  let folha = formatos[formato];
+  let folhaW = folha.w;
+  let folhaH = folha.h;
+
+  if (orientacao === "landscape") {
+    [folhaW, folhaH] = [folhaH, folhaW];
+  }
+
+  const larguraPosterPx = mmToPx(larguraCm * 10);
+  const alturaPosterPx = mmToPx(alturaCm * 10);
+
+  const folhaWpx = mmToPx(folhaW);
+  const folhaHpx = mmToPx(folhaH);
+
   const tempCanvas = document.createElement("canvas");
-  tempCanvas.width = larguraPxFinal;
-  tempCanvas.height = alturaPxFinal;
+  tempCanvas.width = larguraPosterPx;
+  tempCanvas.height = alturaPosterPx;
 
   const tempCtx = tempCanvas.getContext("2d");
-  tempCtx.drawImage(imagemOriginal, 0, 0, larguraPxFinal, alturaPxFinal);
+  tempCtx.drawImage(imagemOriginal, 0, 0, larguraPosterPx, alturaPosterPx);
 
   const preview = document.getElementById("preview");
   preview.innerHTML = "";
   partes = [];
 
-  const folhaW = mmParaPx(210);
-  const folhaH = mmParaPx(297);
+  const cols = Math.ceil(larguraPosterPx / folhaWpx);
+  const rows = Math.ceil(alturaPosterPx / folhaHpx);
 
-  const cols = Math.ceil(larguraPxFinal / folhaW);
-  const rows = Math.ceil(alturaPxFinal / folhaH);
+  const margemPx = mmToPx(margemMm);
+  const bleedPx = mmToPx(bleedMm);
 
   for (let y = 0; y < rows; y++) {
     for (let x = 0; x < cols; x++) {
 
       const canvas = document.createElement("canvas");
-      canvas.width = folhaW;
-      canvas.height = folhaH;
+      canvas.width = folhaWpx;
+      canvas.height = folhaHpx;
 
       const ctx = canvas.getContext("2d");
 
       ctx.fillStyle = "white";
-      ctx.fillRect(0, 0, folhaW, folhaH);
+      ctx.fillRect(0, 0, folhaWpx, folhaHpx);
 
-      const margemPx = mmParaPx(margemMm);
-
-      const areaW = folhaW - margemPx * 2;
-      const areaH = folhaH - margemPx * 2;
+      const areaX = margemPx + bleedPx;
+      const areaY = margemPx + bleedPx;
+      const areaW = folhaWpx - areaX * 2;
+      const areaH = folhaHpx - areaY * 2;
 
       ctx.drawImage(
         tempCanvas,
-        x * folhaW,
-        y * folhaH,
-        folhaW,
-        folhaH,
-        margemPx,
-        margemPx,
+        x * folhaWpx,
+        y * folhaHpx,
+        folhaWpx,
+        folhaHpx,
+        areaX,
+        areaY,
         areaW,
         areaH
       );
 
       ctx.strokeStyle = "black";
-      ctx.strokeRect(
-        margemPx,
-        margemPx,
-        areaW,
-        areaH
-      );
+      ctx.lineWidth = 2;
+      ctx.strokeRect(areaX, areaY, areaW, areaH);
 
-      partes.push(canvas);
+      partes.push({
+        canvas,
+        folhaW,
+        folhaH
+      });
+
       preview.appendChild(canvas);
     }
   }
+
+  document.getElementById("status").innerText =
+    `Preview gerado: ${partes.length} página(s).`;
 }
 
+/* PDF */
 async function gerarPDF() {
-  if (partes.length === 0) return alert("Gere o preview primeiro!");
+  if (partes.length === 0) {
+    alert("Gere o preview primeiro!");
+    return;
+  }
 
   const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF({ unit: "mm" });
+
+  const primeira = partes[0];
+
+  const pdf = new jsPDF({
+    unit: "mm",
+    format: [primeira.folhaW, primeira.folhaH]
+  });
 
   const barra = document.getElementById("barra");
   const status = document.getElementById("status");
 
   for (let i = 0; i < partes.length; i++) {
-
     const progresso = Math.round((i / partes.length) * 100);
+
     barra.style.width = progresso + "%";
     status.innerText = `Gerando PDF... ${progresso}%`;
 
-    await new Promise(r => setTimeout(r, 5));
+    await new Promise(resolve => setTimeout(resolve, 5));
 
-    if (i > 0) pdf.addPage([210, 297]);
+    if (i > 0) {
+      pdf.addPage([partes[i].folhaW, partes[i].folhaH]);
+    }
 
-    const imgData = partes[i].toDataURL("image/jpeg", 0.7);
+    const imgData = partes[i].canvas.toDataURL("image/jpeg", 0.8);
 
-    pdf.addImage(imgData, "JPEG", 0, 0, 210, 297);
+    pdf.addImage(
+      imgData,
+      "JPEG",
+      0,
+      0,
+      partes[i].folhaW,
+      partes[i].folhaH
+    );
   }
 
   barra.style.width = "100%";
@@ -164,3 +290,18 @@ async function gerarPDF() {
 
   status.innerText = "Download concluído!";
 }
+
+/* POPUP */
+function abrirPopup() {
+  popupOverlay.style.display = "flex";
+}
+
+function fecharPopup() {
+  popupOverlay.style.display = "none";
+}
+
+popupOverlay.addEventListener("click", e => {
+  if (e.target === popupOverlay) {
+    fecharPopup();
+  }
+});
