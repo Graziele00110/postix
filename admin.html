@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Painel Admin</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1>Painel Admin</h1>
+
+<div class="box">
+  <input type="date" id="expira">
+  <input type="number" id="usos" placeholder="Qtd usos (ex: 1)">
+  <button onclick="criarToken()">Gerar Token</button>
+</div>
+
+<h2>Tokens</h2>
+<div id="lista"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="admin.js"></script>
+
+</body>
+</html>
