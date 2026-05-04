@@ -12,8 +12,8 @@ body {
 }
 
 .logo {
-  width: 250px;
-  margin: 20px 0;
+  width: 260px;
+  max-width: 90%;
 }
 
 .login-area {
