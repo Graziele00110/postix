@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PostiX | Ferramenta Profissional</title>
+  <title>PostiX</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -12,99 +12,92 @@
 
 <!-- LOGIN -->
 <div id="loginArea" class="login-area glass">
-  <img src="assets/logo.png" class="logo-login" alt="PostiX">
+
+  <img src="assets/logo.png" class="logo-login">
 
   <h2>Acesso ao PostiX</h2>
-  <p>Entre com o login recebido após a compra.</p>
 
   <input type="email" id="emailLogin" placeholder="Email">
-  <input type="password" id="senhaLogin" placeholder="Senha">
+
+  <!-- SENHA COM OLHO -->
+  <div class="senha-box">
+    <input type="password" id="senhaLogin" placeholder="Senha">
+    <button type="button" class="ver-senha" onclick="alternarSenha()">👁️</button>
+  </div>
 
   <button onclick="fazerLogin()">Entrar</button>
 
   <p id="loginMensagem"></p>
 
-  <hr>
-
-  <p class="compra-info">
-    Ainda não comprou?<br>
-    PIX/Contato: <strong>(92) 99160-6807</strong><br>
-    Email: <strong>grazielea.oliveira31@gmail.com</strong>
-  </p>
 </div>
 
 <!-- APP -->
-<div id="app" style="display: none;">
+<div id="app" style="display:none;">
 
-  <header>
-    <img src="assets/logo.png" alt="PostiX" class="logo">
-  </header>
+<header>
+  <img src="assets/logo.png" class="logo">
+</header>
 
-  <div class="container glass">
+<div class="container glass">
 
-    <div class="upload-box">
-      <input type="file" id="upload" accept="image/*">
+  <div class="upload-box">
+    <input type="file" id="upload">
+  </div>
+
+  <div class="inputs">
+
+    <input type="number" id="larguraCm" placeholder="Largura (cm)">
+    <input type="number" id="alturaCm" placeholder="Altura (cm)">
+
+    <select id="formato">
+      <option value="A4">A4</option>
+      <option value="A3">A3</option>
+      <option value="A2">A2</option>
+      <option value="A1">A1</option>
+      <option value="A5">A5</option>
+    </select>
+
+    <select id="orientacao">
+      <option value="portrait">Retrato</option>
+      <option value="landscape">Paisagem</option>
+    </select>
+
+    <input type="number" id="margemMm" value="5">
+
+    <div class="campo">
+      <label>
+        Sangria
+        <span onclick="abrirPopup()" class="info">ⓘ</span>
+      </label>
+      <input type="number" id="bleedMm" value="3">
     </div>
-
-    <div class="inputs">
-
-      <input type="number" id="larguraCm" placeholder="Largura do poster (cm)">
-      <input type="number" id="alturaCm" placeholder="Altura do poster (cm)">
-
-      <select id="formato">
-        <option value="A4">A4</option>
-        <option value="A3">A3</option>
-        <option value="A2">A2</option>
-        <option value="A1">A1</option>
-        <option value="A5">A5</option>
-      </select>
-
-      <select id="orientacao">
-        <option value="portrait">Retrato</option>
-        <option value="landscape">Paisagem</option>
-      </select>
-
-      <input type="number" id="margemMm" placeholder="Margem (mm)" value="5">
-
-      <div class="campo">
-        <label>
-          Sangria (mm)
-          <span class="info" onclick="abrirPopup()">ⓘ</span>
-        </label>
-        <input type="number" id="bleedMm" value="3">
-      </div>
-
-    </div>
-
-    <div class="botoes">
-      <button onclick="gerarPreview()">Gerar Preview</button>
-      <button onclick="gerarPDF()">Baixar PDF</button>
-      <button onclick="limparTudo()">Limpar</button>
-      <button onclick="sair()">Sair</button>
-    </div>
-
-    <div class="progresso-container">
-      <div id="barra"></div>
-    </div>
-
-    <p id="status"></p>
-
-    <div id="preview" class="preview-area glass"></div>
 
   </div>
 
+  <div class="botoes">
+    <button onclick="gerarPreview()">Preview</button>
+    <button onclick="gerarPDF()">PDF</button>
+    <button onclick="limparTudo()">Limpar</button>
+    <button onclick="sair()">Sair</button>
+  </div>
+
+  <div class="progresso-container">
+    <div id="barra"></div>
+  </div>
+
+  <p id="status"></p>
+
+  <div id="preview" class="preview-area glass"></div>
+
+</div>
 </div>
 
 <!-- POPUP -->
 <div id="popupOverlay" class="popup-overlay">
   <div class="popup-box">
-    <h3>O que é Sangria?</h3>
-    <p>
-      Sangria é uma área extra ao redor da arte que será cortada após a impressão.
-      Ela evita bordas brancas indesejadas.
-    </p>
-    <p><strong>Recomendado: 3mm</strong></p>
-    <button onclick="fecharPopup()">Entendi</button>
+    <h3>Sangria</h3>
+    <p>Área extra para evitar bordas brancas no corte.</p>
+    <button onclick="fecharPopup()">Ok</button>
   </div>
 </div>
 
