@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:3000";
+const API_URL = "https://postix-api.onrender.com";
 
 let imagemOriginal = null;
 let partes = [];
