@@ -1,3 +1,58 @@
+async function validarAcesso() {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get("token");
+
+  if (!token) {
+    bloquear("Link inválido");
+    return;
+  }
+
+  const { data, error } = await window.db
+    .from("tokens")
+    .select("*")
+    .eq("token", token)
+    .single();
+
+  if (error || !data) {
+    bloquear("Token não encontrado");
+    return;
+  }
+
+  // já usado?
+  if (data.usado) {
+    bloquear("Link já utilizado");
+    return;
+  }
+
+  // expirado?
+  const hoje = new Date();
+  const expira = new Date(data.expira);
+
+  if (hoje > expira) {
+    bloquear("Link expirado");
+    return;
+  }
+
+  // marcar como usado
+  await window.db
+    .from("tokens")
+    .update({ usado: true })
+    .eq("id", data.id);
+
+  console.log("Acesso liberado");
+}
+
+function bloquear(msg) {
+  document.body.innerHTML = `
+    <div style="text-align:center; padding:50px;">
+      <h1>${msg}</h1>
+    </div>
+  `;
+}
+
+validarAcesso();
+
+// Começa aqui
 let imagemOriginal = null;
 let partes = [];
 
