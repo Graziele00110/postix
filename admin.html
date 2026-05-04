@@ -2,8 +2,51 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Painel Admin</title>
-  <link rel="stylesheet" href="style.css">
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #111;
+      color: white;
+      text-align: center;
+    }
+
+    .box {
+      margin: 20px auto;
+      padding: 15px;
+      background: #1e293b;
+      border-radius: 10px;
+      width: fit-content;
+    }
+
+    input, button {
+      margin: 5px;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+    }
+
+    button {
+      background: #fc6d00;
+      color: white;
+      cursor: pointer;
+    }
+
+    #lista {
+      max-width: 800px;
+      margin: auto;
+    }
+
+    .token-card {
+      background: #1e293b;
+      padding: 15px;
+      margin: 10px;
+      border-radius: 10px;
+      text-align: left;
+    }
+  </style>
 </head>
 <body>
 
@@ -11,15 +54,88 @@
 
 <div class="box">
   <input type="date" id="expira">
-  <input type="number" id="usos" placeholder="Qtd usos (ex: 1)">
   <button onclick="criarToken()">Gerar Token</button>
 </div>
 
 <h2>Tokens</h2>
 <div id="lista"></div>
 
+<!-- SUPABASE -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="admin.js"></script>
+
+<script>
+  const supabase = window.supabase.createClient(
+    "https://SEU_PROJETO.supabase.co",
+    "SUA_PUBLIC_ANON_KEY"
+  );
+
+  function gerarToken() {
+    return Math.random().toString(36).substring(2, 10);
+  }
+
+  async function criarToken() {
+    const token = gerarToken();
+    const expira = document.getElementById("expira").value;
+
+    if (!expira) {
+      alert("Escolha uma data de expiração");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("tokens")
+      .insert([{ token, expira }]);
+
+    if (error) {
+      console.error(error);
+      alert("Erro ao criar token");
+      return;
+    }
+
+    alert("Token criado com sucesso!");
+    listarTokens();
+  }
+
+  async function listarTokens() {
+    const { data, error } = await supabase
+      .from("tokens")
+      .select("*")
+      .order("id", { ascending: false });
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    const lista = document.getElementById("lista");
+    lista.innerHTML = "";
+
+    data.forEach(t => {
+      lista.innerHTML += `
+        <div class="token-card">
+          <p><b>Token:</b> ${t.token}</p>
+          <p>Expira: ${t.expira}</p>
+
+          <button onclick="copiarLink('${t.token}')">Copiar Link</button>
+          <button onclick="deletar('${t.id}')">Deletar</button>
+        </div>
+      `;
+    });
+  }
+
+  function copiarLink(token) {
+    const link = `${window.location.origin}/?token=${token}`;
+    navigator.clipboard.writeText(link);
+    alert("Link copiado!");
+  }
+
+  async function deletar(id) {
+    await supabase.from("tokens").delete().eq("id", id);
+    listarTokens();
+  }
+
+  listarTokens();
+</script>
 
 </body>
 </html>
