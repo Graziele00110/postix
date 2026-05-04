@@ -1,237 +1,77 @@
-* {
-  box-sizing: border-box;
-}
-
 body {
-  font-family: Arial, sans-serif;
-  margin: 0;
+  font-family: Arial;
+  background: #0b111f;
+  color: white;
   text-align: center;
-  background: linear-gradient(135deg, #0b111f, #1a2338);
-  color: white;
-  transition: 0.3s;
-}
-
-body.light {
-  background: #f5f7fa;
-  color: #111;
-}
-
-#toggleTema {
-  position: fixed;
-  top: 10px;
-  right: 10px;
-  padding: 10px;
-  border-radius: 50%;
-  border: none;
-  background: #fc6d00;
-  color: white;
-  cursor: pointer;
-  z-index: 3000;
-}
-
-.logo {
-  width: 250px;
-  margin: 20px 0;
-}
-
-.logo-login {
-  width: 180px;
-  margin-bottom: 10px;
 }
 
 .glass {
   background: rgba(255,255,255,0.08);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-radius: 15px;
-  border: 1px solid rgba(255,255,255,0.15);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-}
-
-.container {
-  margin: 20px;
   padding: 20px;
+  border-radius: 12px;
 }
 
-.upload-box {
-  margin-bottom: 30px;
-}
-
-.inputs {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 12px;
-}
-
-input, select {
-  padding: 10px;
-  border-radius: 8px;
-  border: none;
-  outline: none;
-  background: rgba(255,255,255,0.12);
-  color: white;
-  min-width: 180px;
-}
-
-select option {
-  color: black;
-}
-
-button {
-  margin: 10px;
-  padding: 10px 15px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  background: linear-gradient(135deg, #fc6d00, #ff9a3c);
-  color: white;
-  transition: 0.2s;
-}
-
-button:hover {
-  opacity: 0.9;
-  transform: translateY(-2px);
-}
-
-.campo {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.campo label {
-  font-size: 14px;
-  margin-bottom: 5px;
-}
-
-.info {
-  cursor: pointer;
-  color: #4facfe;
-  font-weight: bold;
-}
-
-.preview-area {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, 140px);
-  gap: 12px;
-  justify-content: center;
-  margin-top: 20px;
-  padding: 15px;
-}
-
-canvas {
-  width: 140px;
-  background: white;
-  border-radius: 6px;
-  border: 2px dashed #ccc;
-}
-
-.progresso-container {
-  width: 80%;
-  height: 20px;
-  margin: 20px auto;
-  background: rgba(255,255,255,0.1);
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-#barra {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, #fc6d00, #ff9a3c);
-  transition: width 0.2s;
-}
-
-#status {
-  font-size: 14px;
-  opacity: 0.85;
+.logo {
+  width: 200px;
 }
 
 .login-area {
-  max-width: 380px;
+  max-width: 300px;
   margin: 80px auto;
-  padding: 25px;
 }
 
-.login-area input {
-  display: block;
-  width: 100%;
-  margin: 12px 0;
+input, select {
+  width: 90%;
+  padding: 10px;
+  margin: 10px;
+  border-radius: 8px;
 }
 
-#loginMensagem {
-  color: #ff9a3c;
-  font-weight: bold;
+button {
+  padding: 10px;
+  margin: 5px;
+  border-radius: 8px;
+  background: #fc6d00;
+  color: white;
+  border: none;
 }
 
-.compra-info {
-  font-size: 14px;
-  line-height: 1.5;
+/* senha */
+.senha-box {
+  display: flex;
+  justify-content: center;
 }
 
+.senha-box input {
+  flex: 1;
+}
+
+.ver-senha {
+  width: 50px;
+}
+
+/* preview */
+.preview-area {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 120px);
+  gap: 10px;
+}
+
+canvas {
+  width: 120px;
+}
+
+/* popup */
 .popup-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.65);
+  background: rgba(0,0,0,0.6);
   display: none;
   justify-content: center;
   align-items: center;
-  z-index: 2000;
 }
 
 .popup-box {
-  width: 320px;
   background: #1e293b;
-  color: white;
-  padding: 25px;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-}
-
-body.light .glass {
-  background: rgba(255,255,255,0.75);
-  color: #111;
-}
-
-body.light input,
-body.light select {
-  background: white;
-  color: #111;
-}
-
-body.light .popup-box {
-  background: white;
-  color: #111;
-}
-
-body.light .progresso-container {
-  background: #ddd;
-}
-
-@media (max-width: 600px) {
-  .logo {
-    width: 190px;
-  }
-
-  .inputs {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  input, select {
-    width: 90%;
-  }
-
-  .preview-area {
-    grid-template-columns: repeat(auto-fill, 120px);
-  }
-
-  canvas {
-    width: 120px;
-  }
-
-  .login-area {
-    margin: 60px 15px;
-  }
+  padding: 20px;
 }
