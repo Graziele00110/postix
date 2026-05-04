@@ -322,3 +322,24 @@ function alternarSenha() {
     eyeOff.style.display = "none";
   }
 }
+
+/* LIMPAR TUDO */
+function limparTudo() {
+  if (!confirm("Deseja limpar tudo?")) return;
+
+  upload.value = "";
+  larguraCmInput.value = "";
+  alturaCmInput.value = "";
+  margemMmInput.value = "5";
+  bleedMmInput.value = "3";
+
+  formatoSelect.value = "A4";
+  orientacaoSelect.value = "portrait";
+
+  imagemOriginal = null;
+  partes = [];
+
+  document.getElementById("preview").innerHTML = "";
+  document.getElementById("barra").style.width = "0%";
+  document.getElementById("status").innerText = "Campos limpos.";
+}
