@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Painel Admin - PostiX</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0b111f;
+      color: white;
+      margin: 0;
+      padding: 30px;
+    }
+
+    h1, h2 {
+      text-align: center;
+    }
+
+    .box {
+      background: #1e293b;
+      padding: 25px;
+      border-radius: 12px;
+      max-width: 900px;
+      margin: 20px auto;
+    }
+
+    input {
+      padding: 10px;
+      margin: 8px;
+      border-radius: 8px;
+      border: none;
+      width: 250px;
+    }
+
+    button {
+      padding: 10px 14px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #fc6d00;
+      color: white;
+      margin: 5px;
+    }
+
+    button:hover {
+      opacity: 0.85;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #334155;
+      text-align: center;
+    }
+
+    .danger {
+      background: #dc2626;
+    }
+
+    .reset {
+      background: #2563eb;
+    }
+
+    #msg {
+      text-align: center;
+      font-weight: bold;
+      color: #ff9a3c;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Painel Admin - PostiX</h1>
+
+<div class="box">
+  <h2>Acesso Admin</h2>
+
+  <input type="password" id="adminKey" placeholder="Senha admin">
+  <button onclick="salvarAdminKey()">Entrar no painel</button>
+
+  <p id="msg"></p>
+</div>
+
+<div class="box">
+  <h2>Criar usuário</h2>
+
+  <input type="email" id="email" placeholder="Email do cliente">
+  <input type="text" id="senha" placeholder="Senha do cliente">
+
+  <button onclick="criarUsuario()">Criar acesso</button>
+</div>
+
+<div class="box">
+  <h2>Usuários cadastrados</h2>
+
+  <button onclick="listarUsuarios()">Atualizar lista</button>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Email</th>
+        <th>Dispositivos</th>
+        <th>Criado em</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+
+    <tbody id="listaUsuarios"></tbody>
+  </table>
+</div>
+
+<script>
+const API_URL = "http://localhost:3000";
+
+function getAdminKey() {
+  return localStorage.getItem("postix_admin_key");
+}
+
+function salvarAdminKey() {
+  const key = document.getElementById("adminKey").value.trim();
+
+  if (!key) {
+    mostrarMsg("Digite a senha admin.");
+    return;
+  }
+
+  localStorage.setItem("postix_admin_key", key);
+  mostrarMsg("Senha admin salva.");
+  listarUsuarios();
+}
+
+function mostrarMsg(texto) {
+  document.getElementById("msg").innerText = texto;
+}
+
+async function criarUsuario() {
+  const email = document.getElementById("email").value.trim();
+  const senha = document.getElementById("senha").value.trim();
+
+  if (!email || !senha) {
+    mostrarMsg("Preencha email e senha.");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/admin/criar`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-key": getAdminKey()
+      },
+      body: JSON.stringify({
+        email,
+        password: senha
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      mostrarMsg(data.error || "Erro ao criar usuário.");
+      return;
+    }
+
+    mostrarMsg("Usuário criado com sucesso.");
+    document.getElementById("email").value = "";
+    document.getElementById("senha").value = "";
+
+    listarUsuarios();
+
+  } catch {
+    mostrarMsg("Erro ao conectar com servidor.");
+  }
+}
+
+async function listarUsuarios() {
+  try {
+    const res = await fetch(`${API_URL}/admin/usuarios`, {
+      headers: {
+        "x-admin-key": getAdminKey()
+      }
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      mostrarMsg(data.error || "Erro ao listar usuários.");
+      return;
+    }
+
+    const tbody = document.getElementById("listaUsuarios");
+    tbody.innerHTML = "";
+
+    data.forEach(user => {
+      const tr = document.createElement("tr");
+
+      tr.innerHTML = `
+        <td>${user.id}</td>
+        <td>${user.email}</td>
+        <td>${user.dispositivos}/2</td>
+        <td>${user.criadoEm || "-"}</td>
+        <td>
+          <button class="reset" onclick="resetarDispositivos(${user.id})">
+            Resetar dispositivos
+          </button>
+
+          <button class="danger" onclick="excluirUsuario(${user.id})">
+            Excluir
+          </button>
+        </td>
+      `;
+
+      tbody.appendChild(tr);
+    });
+
+  } catch {
+    mostrarMsg("Erro ao conectar com servidor.");
+  }
+}
+
+async function resetarDispositivos(id) {
+  if (!confirm("Resetar os dispositivos deste usuário?")) return;
+
+  const res = await fetch(`${API_URL}/admin/resetar-dispositivos/${id}`, {
+    method: "POST",
+    headers: {
+      "x-admin-key": getAdminKey()
+    }
+  });
+
+  const data = await res.json();
+  mostrarMsg(data.message || data.error);
+
+  listarUsuarios();
+}
+
+async function excluirUsuario(id) {
+  if (!confirm("Tem certeza que deseja excluir este usuário?")) return;
+
+  const res = await fetch(`${API_URL}/admin/usuarios/${id}`, {
+    method: "DELETE",
+    headers: {
+      "x-admin-key": getAdminKey()
+    }
+  });
+
+  const data = await res.json();
+  mostrarMsg(data.message || data.error);
+
+  listarUsuarios();
+}
+</script>
+
+</body>
+</html>
