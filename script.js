@@ -185,8 +185,21 @@ function gerarPreview() {
     [folhaW, folhaH] = [folhaH, folhaW];
   }
 
-  const larguraPosterPx = mmToPx(larguraCm * 10);
-  const alturaPosterPx = mmToPx(alturaCm * 10);
+  let larguraPosterPx = mmToPx(larguraCm * 10);
+  let alturaPosterPx = mmToPx(alturaCm * 10);
+
+  // 🔥 limite máximo (evita travamento)
+  const MAX_PIXELS = 8000;
+
+  if (larguraPosterPx > MAX_PIXELS || alturaPosterPx > MAX_PIXELS) {
+    const escala = Math.min(
+      MAX_PIXELS / larguraPosterPx,
+      MAX_PIXELS / alturaPosterPx
+    );
+
+    larguraPosterPx *= escala;
+    alturaPosterPx *= escala;
+  }
 
   const folhaWpx = mmToPx(folhaW);
   const folhaHpx = mmToPx(folhaH);
@@ -246,7 +259,8 @@ function gerarPreview() {
       ctx.strokeRect(areaX, areaY, areaW, areaH);
 
       partes.push({
-        canvas,
+        x,
+        y,
         folhaW,
         folhaH
       });
@@ -261,45 +275,60 @@ function gerarPreview() {
 
 /* PDF */
 async function gerarPDF() {
-  if (partes.length === 0) {
-    alert("Gere o preview primeiro!");
+  if (!imagemOriginal) {
+    alert("Envie uma imagem!");
     return;
   }
 
   const { jsPDF } = window.jspdf;
 
-  const primeira = partes[0];
-
+  const folha = partes[0];
   const pdf = new jsPDF({
     unit: "mm",
-    format: [primeira.folhaW, primeira.folhaH]
+    format: [folha.folhaW, folha.folhaH]
   });
 
   const barra = document.getElementById("barra");
   const status = document.getElementById("status");
 
   for (let i = 0; i < partes.length; i++) {
-    const progresso = Math.round((i / partes.length) * 100);
 
+    const progresso = Math.round((i / partes.length) * 100);
     barra.style.width = progresso + "%";
     status.innerText = `Gerando PDF... ${progresso}%`;
 
-    await new Promise(resolve => setTimeout(resolve, 5));
+    await new Promise(r => setTimeout(r, 1));
 
-    if (i > 0) {
-      pdf.addPage([partes[i].folhaW, partes[i].folhaH]);
-    }
+    if (i > 0) pdf.addPage();
 
-    const imgData = partes[i].canvas.toDataURL("image/jpeg", 0.92);
+    // cria canvas temporário
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
 
-    pdf.addImage(
-      imgData,
-      "JPEG",
+    const folhaWpx = mmToPx(partes[i].folhaW);
+    const folhaHpx = mmToPx(partes[i].folhaH);
+
+    canvas.width = folhaWpx;
+    canvas.height = folhaHpx;
+
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.drawImage(
+      imagemOriginal,
+      partes[i].x * folhaWpx,
+      partes[i].y * folhaHpx,
+      folhaWpx,
+      folhaHpx,
       0,
       0,
-      partes[i].folhaW,
-      partes[i].folhaH
+      folhaWpx,
+      folhaHpx
     );
+
+    const imgData = canvas.toDataURL("image/jpeg", 0.9);
+
+    pdf.addImage(imgData, "JPEG", 0, 0, partes[i].folhaW, partes[i].folhaH);
   }
 
   barra.style.width = "100%";
