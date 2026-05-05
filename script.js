@@ -193,8 +193,43 @@ function gerarPreview() {
   preview.innerHTML = "";
   partes = [];
 
+  let limitePreview = 7;
+  let contador = 0;
+
   for (let y = 0; y < rows; y++) {
     for (let x = 0; x < cols; x++) {
+
+      // sempre salva TODAS as partes (pro PDF)
+      partes.push({
+        x,
+        y,
+        folhaW,
+        folhaH,
+        larguraPosterMm,
+        alturaPosterMm
+      });
+
+      // 👇 só desenha as primeiras 7 no preview
+      if (contador < limitePreview) {
+        const canvas = document.createElement("canvas");
+        canvas.width = 210;
+        canvas.height = 297;
+
+        const ctx = canvas.getContext("2d");
+
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = "#111";
+        ctx.font = "18px Arial";
+        ctx.fillText(`Pág. ${contador + 1}`, 60, 150);
+
+        preview.appendChild(canvas);
+      }
+
+      contador++;
+    }
+  }
 
       partes.push({
         x,
