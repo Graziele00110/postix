@@ -1,22 +1,9 @@
-const API_URL = "https://postix-api.onrender.com";
+const API_URL = "http://localhost:3000";
 
 let imagemOriginal = null;
 let partes = [];
 
-let DPI = 150;
-
-// aumenta qualidade só se imagem não for gigante
-function ajustarDPI(larguraCm, alturaCm) {
-  const area = larguraCm * alturaCm;
-
-  if (area < 2000) {
-    DPI = 300; // alta qualidade
-  } else if (area < 5000) {
-    DPI = 200; // médio
-  } else {
-    DPI = 150; // leve (evita travar)
-  }
-}
+const DPI = 150;
 
 const formatos = {
   A5: { w: 148, h: 210 },
@@ -28,6 +15,7 @@ const formatos = {
 
 const mmToPx = mm => (mm / 25.4) * DPI;
 
+/* ELEMENTOS */
 const btnTema = document.getElementById("toggleTema");
 const loginArea = document.getElementById("loginArea");
 const appArea = document.getElementById("app");
@@ -120,7 +108,7 @@ async function fazerLogin() {
     loginMensagem.innerText = "";
     liberarSistema();
 
-  } catch (error) {
+  } catch {
     loginMensagem.innerText = "Erro ao conectar com o servidor.";
   }
 }
@@ -140,6 +128,23 @@ window.addEventListener("load", () => {
   }
 });
 
+/* 👁️ VISUALIZAR SENHA (SVG) */
+function alternarSenha() {
+  const input = document.getElementById("senhaLogin");
+  const eye = document.getElementById("iconEye");
+  const eyeOff = document.getElementById("iconEyeOff");
+
+  if (input.type === "password") {
+    input.type = "text";
+    eye.style.display = "none";
+    eyeOff.style.display = "block";
+  } else {
+    input.type = "password";
+    eye.style.display = "block";
+    eyeOff.style.display = "none";
+  }
+}
+
 /* UPLOAD */
 upload.addEventListener("change", e => {
   const file = e.target.files[0];
@@ -156,7 +161,7 @@ upload.addEventListener("change", e => {
   img.src = URL.createObjectURL(file);
 });
 
-/* PREVIEW */
+/* PREVIEW (DIVISÃO CORRETA) */
 function gerarPreview() {
   if (!imagemOriginal) {
     alert("Envie uma imagem!");
@@ -167,16 +172,13 @@ function gerarPreview() {
   const alturaCm = parseFloat(alturaCmInput.value);
   const formato = formatoSelect.value;
   const orientacao = orientacaoSelect.value;
+  const margemMm = parseFloat(margemMmInput.value) || 0;
+  const bleedMm = parseFloat(bleedMmInput.value) || 0;
 
   if (!larguraCm || !alturaCm) {
     alert("Preencha largura e altura do poster!");
     return;
   }
-
-  ajustarDPI(larguraCm, alturaCm);
-
-  const larguraPosterMm = larguraCm * 10;
-  const alturaPosterMm = alturaCm * 10;
 
   let folha = formatos[formato];
   let folhaW = folha.w;
@@ -186,80 +188,76 @@ function gerarPreview() {
     [folhaW, folhaH] = [folhaH, folhaW];
   }
 
-  const cols = Math.ceil(larguraPosterMm / folhaW);
-  const rows = Math.ceil(alturaPosterMm / folhaH);
+  const larguraPosterPx = mmToPx(larguraCm * 10);
+  const alturaPosterPx = mmToPx(alturaCm * 10);
+
+  const folhaWpx = mmToPx(folhaW);
+  const folhaHpx = mmToPx(folhaH);
+
+  const tempCanvas = document.createElement("canvas");
+  tempCanvas.width = larguraPosterPx;
+  tempCanvas.height = alturaPosterPx;
+
+  const tempCtx = tempCanvas.getContext("2d");
+  tempCtx.drawImage(imagemOriginal, 0, 0, larguraPosterPx, alturaPosterPx);
 
   const preview = document.getElementById("preview");
   preview.innerHTML = "";
   partes = [];
 
-  let limitePreview = 7;
-  let contador = 0;
+  const cols = Math.ceil(larguraPosterPx / folhaWpx);
+  const rows = Math.ceil(alturaPosterPx / folhaHpx);
+
+  const margemPx = mmToPx(margemMm);
+  const bleedPx = mmToPx(bleedMm);
 
   for (let y = 0; y < rows; y++) {
     for (let x = 0; x < cols; x++) {
 
-      // sempre salva TODAS as partes (pro PDF)
-      partes.push({
-        x,
-        y,
-        folhaW,
-        folhaH,
-        larguraPosterMm,
-        alturaPosterMm
-      });
-
-      // 👇 só desenha as primeiras 7 no preview
-      if (contador < limitePreview) {
-        const canvas = document.createElement("canvas");
-        canvas.width = 210;
-        canvas.height = 297;
-
-        const ctx = canvas.getContext("2d");
-
-        ctx.fillStyle = "white";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        ctx.fillStyle = "#111";
-        ctx.font = "18px Arial";
-        ctx.fillText(`Pág. ${contador + 1}`, 60, 150);
-
-        preview.appendChild(canvas);
-      }
-
-      contador++;
-    }
-  }
-
-      partes.push({
-        x,
-        y,
-        folhaW,
-        folhaH,
-        larguraPosterMm,
-        alturaPosterMm
-      });
-
       const canvas = document.createElement("canvas");
-      canvas.width = 210;
-      canvas.height = 297;
+      canvas.width = folhaWpx;
+      canvas.height = folhaHpx;
 
       const ctx = canvas.getContext("2d");
 
       ctx.fillStyle = "white";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillRect(0, 0, folhaWpx, folhaHpx);
 
-      ctx.fillStyle = "#111";
-      ctx.font = "20px Arial";
-      ctx.fillText(`Pág. ${partes.length}`, 60, 145);
+      const areaX = margemPx + bleedPx;
+      const areaY = margemPx + bleedPx;
+      const areaW = folhaWpx - areaX * 2;
+      const areaH = folhaHpx - areaY * 2;
+
+      ctx.drawImage(
+        tempCanvas,
+        x * folhaWpx,
+        y * folhaHpx,
+        folhaWpx,
+        folhaHpx,
+        areaX,
+        areaY,
+        areaW,
+        areaH
+      );
+
+      ctx.strokeStyle = "black";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(areaX, areaY, areaW, areaH);
+
+      partes.push({
+        canvas,
+        folhaW,
+        folhaH
+      });
 
       preview.appendChild(canvas);
     }
   }
 
   document.getElementById("status").innerText =
-    `Quantidade real: ${partes.length} folha(s).`;
+    `Preview gerado: ${partes.length} página(s).`;
 }
+
 /* PDF */
 async function gerarPDF() {
   if (partes.length === 0) {
@@ -279,85 +277,27 @@ async function gerarPDF() {
   const barra = document.getElementById("barra");
   const status = document.getElementById("status");
 
-  const margemMm = parseFloat(margemMmInput.value) || 0;
-  const bleedMm = parseFloat(bleedMmInput.value) || 0;
-
   for (let i = 0; i < partes.length; i++) {
-    const p = partes[i];
-
     const progresso = Math.round((i / partes.length) * 100);
+
     barra.style.width = progresso + "%";
     status.innerText = `Gerando PDF... ${progresso}%`;
 
-    await new Promise(r => setTimeout(r, 5));
+    await new Promise(resolve => setTimeout(resolve, 5));
 
     if (i > 0) {
-      pdf.addPage([p.folhaW, p.folhaH]);
+      pdf.addPage([partes[i].folhaW, partes[i].folhaH]);
     }
 
-    const folhaWpx = mmToPx(p.folhaW);
-    const folhaHpx = mmToPx(p.folhaH);
-
-    const canvas = document.createElement("canvas");
-    canvas.width = folhaWpx;
-    canvas.height = folhaHpx;
-
-    const ctx = canvas.getContext("2d");
-
-    ctx.fillStyle = "white";
-    ctx.fillRect(0, 0, folhaWpx, folhaHpx);
-
-    const margemPx = mmToPx(margemMm);
-    const bleedPx = mmToPx(bleedMm);
-
-    const areaX = margemPx + bleedPx;
-    const areaY = margemPx + bleedPx;
-    const areaW = folhaWpx - areaX * 2;
-    const areaH = folhaHpx - areaY * 2;
-
-    const inicioXmm = p.x * p.folhaW;
-    const inicioYmm = p.y * p.folhaH;
-
-    const corteWmm = Math.min(p.folhaW, p.larguraPosterMm - inicioXmm);
-    const corteHmm = Math.min(p.folhaH, p.alturaPosterMm - inicioYmm);
-
-    const sx = (inicioXmm / p.larguraPosterMm) * imagemOriginal.width;
-    const sy = (inicioYmm / p.alturaPosterMm) * imagemOriginal.height;
-
-    const sw = (corteWmm / p.larguraPosterMm) * imagemOriginal.width;
-    const sh = (corteHmm / p.alturaPosterMm) * imagemOriginal.height;
-
-    const drawW = areaW * (corteWmm / p.folhaW);
-    const drawH = areaH * (corteHmm / p.folhaH);
-
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = "high";
-
-    ctx.drawImage(
-      imagemOriginal,
-      sx,
-      sy,
-      sw,
-      sh,
-      areaX,
-      areaY,
-      drawW,
-      drawH
-    );
-
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(areaX, areaY, areaW, areaH);
-
-    const imgData = canvas.toDataURL("image/jpeg", 0.9);
+    const imgData = partes[i].canvas.toDataURL("image/jpeg", 0.8);
 
     pdf.addImage(
       imgData,
       "JPEG",
       0,
       0,
-      p.folhaW,
-      p.folhaH
+      partes[i].folhaW,
+      partes[i].folhaH
     );
   }
 
@@ -366,42 +306,10 @@ async function gerarPDF() {
 
   pdf.save("postix.pdf");
 
-  status.innerText = `PDF concluído com ${partes.length} folha(s).`;
+  status.innerText = "Download concluído!";
 }
 
-/* POPUP */
-function abrirPopup() {
-  popupOverlay.style.display = "flex";
-}
-
-function fecharPopup() {
-  popupOverlay.style.display = "none";
-}
-
-popupOverlay.addEventListener("click", e => {
-  if (e.target === popupOverlay) {
-    fecharPopup();
-  }
-});
-
-/* 👁️ VISUALIZAR SENHA */
-function alternarSenha() {
-  const input = document.getElementById("senhaLogin");
-  const eye = document.getElementById("iconEye");
-  const eyeOff = document.getElementById("iconEyeOff");
-
-  if (input.type === "password") {
-    input.type = "text";
-    eye.style.display = "none";
-    eyeOff.style.display = "block";
-  } else {
-    input.type = "password";
-    eye.style.display = "block";
-    eyeOff.style.display = "none";
-  }
-}
-
-/* LIMPAR TUDO */
+/* LIMPAR */
 function limparTudo() {
   if (!confirm("Deseja limpar tudo?")) return;
 
@@ -422,17 +330,17 @@ function limparTudo() {
   document.getElementById("status").innerText = "Campos limpos.";
 }
 
-/* calcular folhas */
-function calcularFolhasReais(larguraCm, alturaCm, folhaW, folhaH) {
-  const larguraMm = larguraCm * 10;
-  const alturaMm = alturaCm * 10;
-
-  const cols = Math.ceil(larguraMm / folhaW);
-  const rows = Math.ceil(alturaMm / folhaH);
-
-  return {
-    cols,
-    rows,
-    total: cols * rows
-  };
+/* POPUP */
+function abrirPopup() {
+  popupOverlay.style.display = "flex";
 }
+
+function fecharPopup() {
+  popupOverlay.style.display = "none";
+}
+
+popupOverlay.addEventListener("click", e => {
+  if (e.target === popupOverlay) {
+    fecharPopup();
+  }
+});
