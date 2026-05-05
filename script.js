@@ -275,60 +275,110 @@ function gerarPreview() {
 
 /* PDF */
 async function gerarPDF() {
-  if (!imagemOriginal) {
-    alert("Envie uma imagem!");
+  if (partes.length === 0) {
+    alert("Gere o preview primeiro!");
     return;
   }
 
   const { jsPDF } = window.jspdf;
 
-  const folha = partes[0];
+  const primeira = partes[0];
+
   const pdf = new jsPDF({
     unit: "mm",
-    format: [folha.folhaW, folha.folhaH]
+    format: [primeira.folhaW, primeira.folhaH]
   });
 
   const barra = document.getElementById("barra");
   const status = document.getElementById("status");
 
-  for (let i = 0; i < partes.length; i++) {
+  const larguraCm = parseFloat(larguraCmInput.value);
+  const alturaCm = parseFloat(alturaCmInput.value);
+  const margemMm = parseFloat(margemMmInput.value) || 0;
+  const bleedMm = parseFloat(bleedMmInput.value) || 0;
 
+  ajustarDPI(larguraCm, alturaCm);
+
+  let larguraPosterPx = mmToPx(larguraCm * 10);
+  let alturaPosterPx = mmToPx(alturaCm * 10);
+
+  const MAX_PIXELS = 8000;
+
+  if (larguraPosterPx > MAX_PIXELS || alturaPosterPx > MAX_PIXELS) {
+    const escala = Math.min(
+      MAX_PIXELS / larguraPosterPx,
+      MAX_PIXELS / alturaPosterPx
+    );
+
+    larguraPosterPx *= escala;
+    alturaPosterPx *= escala;
+  }
+
+  const tempCanvas = document.createElement("canvas");
+  tempCanvas.width = larguraPosterPx;
+  tempCanvas.height = alturaPosterPx;
+
+  const tempCtx = tempCanvas.getContext("2d");
+  tempCtx.imageSmoothingEnabled = true;
+  tempCtx.imageSmoothingQuality = "high";
+  tempCtx.drawImage(imagemOriginal, 0, 0, larguraPosterPx, alturaPosterPx);
+
+  const margemPx = mmToPx(margemMm);
+  const bleedPx = mmToPx(bleedMm);
+
+  for (let i = 0; i < partes.length; i++) {
     const progresso = Math.round((i / partes.length) * 100);
     barra.style.width = progresso + "%";
     status.innerText = `Gerando PDF... ${progresso}%`;
 
     await new Promise(r => setTimeout(r, 1));
 
-    if (i > 0) pdf.addPage();
-
-    // cria canvas temporário
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
+    if (i > 0) {
+      pdf.addPage([partes[i].folhaW, partes[i].folhaH]);
+    }
 
     const folhaWpx = mmToPx(partes[i].folhaW);
     const folhaHpx = mmToPx(partes[i].folhaH);
 
+    const canvas = document.createElement("canvas");
     canvas.width = folhaWpx;
     canvas.height = folhaHpx;
 
+    const ctx = canvas.getContext("2d");
     ctx.fillStyle = "white";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, folhaWpx, folhaHpx);
+
+    const areaX = margemPx + bleedPx;
+    const areaY = margemPx + bleedPx;
+    const areaW = folhaWpx - areaX * 2;
+    const areaH = folhaHpx - areaY * 2;
 
     ctx.drawImage(
-      imagemOriginal,
+      tempCanvas,
       partes[i].x * folhaWpx,
       partes[i].y * folhaHpx,
       folhaWpx,
       folhaHpx,
-      0,
-      0,
-      folhaWpx,
-      folhaHpx
+      areaX,
+      areaY,
+      areaW,
+      areaH
     );
+
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(areaX, areaY, areaW, areaH);
 
     const imgData = canvas.toDataURL("image/jpeg", 0.9);
 
-    pdf.addImage(imgData, "JPEG", 0, 0, partes[i].folhaW, partes[i].folhaH);
+    pdf.addImage(
+      imgData,
+      "JPEG",
+      0,
+      0,
+      partes[i].folhaW,
+      partes[i].folhaH
+    );
   }
 
   barra.style.width = "100%";
