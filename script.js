@@ -3,7 +3,20 @@ const API_URL = "https://postix-api.onrender.com";
 let imagemOriginal = null;
 let partes = [];
 
-const DPI = 300;
+let DPI = 150;
+
+// aumenta qualidade só se imagem não for gigante
+function ajustarDPI(larguraCm, alturaCm) {
+  const area = larguraCm * alturaCm;
+
+  if (area < 2000) {
+    DPI = 300; // alta qualidade
+  } else if (area < 5000) {
+    DPI = 200; // médio
+  } else {
+    DPI = 150; // leve (evita travar)
+  }
+}
 
 const formatos = {
   A5: { w: 148, h: 210 },
@@ -156,6 +169,8 @@ function gerarPreview() {
   const orientacao = orientacaoSelect.value;
   const margemMm = parseFloat(margemMmInput.value) || 0;
   const bleedMm = parseFloat(bleedMmInput.value) || 0;
+  
+  ajustarDPI(larguraCm, alturaCm);
 
   if (!larguraCm || !alturaCm) {
     alert("Preencha largura e altura do poster!");
@@ -182,6 +197,10 @@ function gerarPreview() {
 
   const tempCtx = tempCanvas.getContext("2d");
   tempCtx.drawImage(imagemOriginal, 0, 0, larguraPosterPx, alturaPosterPx);
+
+  // melhora nitidez (remasterização leve)
+  tempCtx.imageSmoothingEnabled = true;
+  tempCtx.imageSmoothingQuality = "high";
 
   const preview = document.getElementById("preview");
   preview.innerHTML = "";
@@ -271,7 +290,7 @@ async function gerarPDF() {
       pdf.addPage([partes[i].folhaW, partes[i].folhaH]);
     }
 
-    const imgData = partes[i].canvas.toDataURL("image/jpeg", 0.95);
+    const imgData = partes[i].canvas.toDataURL("image/jpeg", 0.92);
 
     pdf.addImage(
       imgData,
