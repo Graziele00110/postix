@@ -355,3 +355,88 @@ function mostrarPlanoUsuario() {
 
   infoPlano.innerText = `${nomePlano} — faltam ${diasRestantes} dia(s) para expirar.`;
 }
+
+function cortarBordasBrancas() {
+  if (!imagemOriginal) {
+    alert("Envie uma imagem primeiro!");
+    return;
+  }
+
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+
+  canvas.width = imagemOriginal.width;
+  canvas.height = imagemOriginal.height;
+
+  ctx.drawImage(imagemOriginal, 0, 0);
+
+  const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imgData.data;
+
+  let top = null;
+  let left = null;
+  let right = null;
+  let bottom = null;
+
+  const tolerancia = 245;
+
+  for (let y = 0; y < canvas.height; y++) {
+    for (let x = 0; x < canvas.width; x++) {
+      const i = (y * canvas.width + x) * 4;
+
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      const a = data[i + 3];
+
+      const branco = r > tolerancia && g > tolerancia && b > tolerancia && a > 0;
+      const transparente = a === 0;
+
+      if (!branco && !transparente) {
+        if (top === null) top = y;
+        if (left === null || x < left) left = x;
+        if (right === null || x > right) right = x;
+        bottom = y;
+      }
+    }
+  }
+
+  if (top === null) {
+    alert("Não encontrei desenho para cortar.");
+    return;
+  }
+
+  const larguraCorte = right - left + 1;
+  const alturaCorte = bottom - top + 1;
+
+  const novoCanvas = document.createElement("canvas");
+  const novoCtx = novoCanvas.getContext("2d");
+
+  novoCanvas.width = larguraCorte;
+  novoCanvas.height = alturaCorte;
+
+  novoCtx.drawImage(
+    canvas,
+    left,
+    top,
+    larguraCorte,
+    alturaCorte,
+    0,
+    0,
+    larguraCorte,
+    alturaCorte
+  );
+
+  const img = new Image();
+
+  img.onload = () => {
+    imagemOriginal = img;
+    partes = [];
+
+    document.getElementById("preview").innerHTML = "";
+    document.getElementById("status").innerText =
+      "Imagem cortada nas bordas brancas. Agora gere o preview.";
+  };
+
+  img.src = novoCanvas.toDataURL("image/png");
+}
