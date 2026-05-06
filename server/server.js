@@ -119,7 +119,7 @@ app.post("/login", (req, res) => {
 app.post("/admin/criar", verificarAdmin, (req, res) => {
   const { email, password, plan_months } = req.body;
 
-  if (!email || !password || plan_months === underfined) {
+  if (!email || !password || plan_months === undefined) {
     return res.status(400).json({ error: "Email, senha e plano são obrigatórios." });
   }
 
