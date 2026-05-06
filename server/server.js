@@ -10,7 +10,7 @@ const db = new sqlite3.Database(dbPath);
 app.use(cors());
 app.use(express.json());
 
-const ADMIN_KEY = "postix-admin-2026";
+const ADMIN_KEY = process.env.ADMIN_KEY || "postix-admin-2026";
 
 db.serialize(() => {
   db.run(`
