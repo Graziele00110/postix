@@ -27,8 +27,6 @@ const alturaCmInput = document.getElementById("alturaCm");
 const formatoSelect = document.getElementById("formato");
 const orientacaoSelect = document.getElementById("orientacao");
 const margemMmInput = document.getElementById("margemMm");
-const bleedMmInput = document.getElementById("bleedMm");
-const popupOverlay = document.getElementById("popupOverlay");
 
 /* TEMA */
 if (localStorage.getItem("tema") === "light") {
@@ -173,7 +171,6 @@ function gerarPreview() {
   const formato = formatoSelect.value;
   const orientacao = orientacaoSelect.value;
   const margemMm = parseFloat(margemMmInput.value) || 0;
-  const bleedMm = parseFloat(bleedMmInput.value) || 0;
 
   if (!larguraCm || !alturaCm) {
     alert("Preencha largura e altura do poster!");
@@ -209,7 +206,7 @@ function gerarPreview() {
   const rows = Math.ceil(alturaPosterPx / folhaHpx);
 
   const margemPx = mmToPx(margemMm);
-  const bleedPx = mmToPx(bleedMm);
+  const bleedPx = 0;
 
   for (let y = 0; y < rows; y++) {
     for (let x = 0; x < cols; x++) {
@@ -317,8 +314,7 @@ function limparTudo() {
   larguraCmInput.value = "";
   alturaCmInput.value = "";
   margemMmInput.value = "5";
-  bleedMmInput.value = "3";
-
+ 
   formatoSelect.value = "A4";
   orientacaoSelect.value = "portrait";
 
@@ -329,18 +325,3 @@ function limparTudo() {
   document.getElementById("barra").style.width = "0%";
   document.getElementById("status").innerText = "Campos limpos.";
 }
-
-/* POPUP */
-function abrirPopup() {
-  popupOverlay.style.display = "flex";
-}
-
-function fecharPopup() {
-  popupOverlay.style.display = "none";
-}
-
-popupOverlay.addEventListener("click", e => {
-  if (e.target === popupOverlay) {
-    fecharPopup();
-  }
-});
