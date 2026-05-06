@@ -231,15 +231,15 @@ function gerarPreview() {
 
       ctx.drawImage(
         tempCanvas,
-        x * folhaWpx,
-        y * folhaHpx,
-        folhaWpx,
-        folhaHpx,
+        x * areaW,
+        y * areaH,
+        areaW,
+        areaH,
         areaX,
         areaY,
         areaW,
         areaH
-      );
+        );
 
       ctx.strokeStyle = "black";
       ctx.lineWidth = 2;
