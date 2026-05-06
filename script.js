@@ -123,8 +123,7 @@ function sair() {
 
 window.addEventListener("load", () => {
   if (localStorage.getItem("postix_logado") === "true") {
-    liberarSistema();
-    mostrarPlanoUsuario();
+    verificarAcessoSalvo();
   } else {
     bloquearSistema();
   }
@@ -332,6 +331,7 @@ function limparTudo() {
   document.getElementById("status").innerText = "Campos limpos.";
 }
 
+/* MOSTRAR PLANO */
 function mostrarPlanoUsuario() {
   const expiresAt = localStorage.getItem("postix_expires_at");
   const planMonths = localStorage.getItem("postix_plan_months");
@@ -354,4 +354,59 @@ function mostrarPlanoUsuario() {
   }
 
   infoPlano.innerText = `${nomePlano} — faltam ${diasRestantes} dia(s) para expirar.`;
+}
+
+/* VERIFICAÇÃO DE ACESSO */
+async function verificarAcessoSalvo() {
+  const email = localStorage.getItem("postix_email");
+
+  if (!email) {
+    sair();
+    return;
+  }
+
+  try {
+    const resposta = await fetch(`${API_URL}/verificar-acesso`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ email })
+    });
+
+    const dados = await resposta.json();
+
+    if (!resposta.ok || dados.expirado) {
+      localStorage.removeItem("postix_logado");
+      localStorage.removeItem("postix_token");
+      localStorage.removeItem("postix_expires_at");
+      localStorage.removeItem("postix_plan_months");
+
+      bloquearSistema();
+
+      loginMensagem.innerHTML = `
+        Seu plano expirou. 
+        <br>
+        <a class="link-whatsapp"
+           href="https://wa.me/5592991606807?text=Olá,%20quero%20renovar%20meu%20plano%20do%20PostiX"
+           target="_blank">
+          Renovar pelo WhatsApp
+        </a>
+      `;
+      return;
+    }
+
+    localStorage.setItem("postix_expires_at", dados.expires_at);
+    localStorage.setItem("postix_plan_months", dados.plan_months);
+
+    liberarSistema();
+
+    if (typeof mostrarPlanoUsuario === "function") {
+      mostrarPlanoUsuario();
+    }
+
+  } catch {
+    bloquearSistema();
+    loginMensagem.innerText = "Erro ao verificar seu plano. Faça login novamente.";
+  }
 }
