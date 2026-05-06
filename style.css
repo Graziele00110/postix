@@ -16,7 +16,7 @@ body.light {
   color: #111;
 }
 
-/* BOTÃO TEMA (CORRIGIDO) */
+/* BOTÃO TEMA */
 #toggleTema {
   position: fixed;
   top: 15px;
@@ -35,7 +35,7 @@ body.light {
   justify-content: center;
 }
 
-/* LOGO (CORRIGIDA) */
+/* LOGO */
 .logo {
   width: 220px;
   margin: 20px auto;
@@ -114,12 +114,6 @@ button:hover {
   margin-bottom: 5px;
 }
 
-.info {
-  cursor: pointer;
-  color: #4facfe;
-  font-weight: bold;
-}
-
 .preview-area {
   display: grid;
   grid-template-columns: repeat(auto-fill, 140px);
@@ -177,25 +171,6 @@ canvas {
 .compra-info {
   font-size: 14px;
   line-height: 1.5;
-}
-
-.popup-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.65);
-  display: none;
-  justify-content: center;
-  align-items: center;
-  z-index: 2000;
-}
-
-.popup-box {
-  width: 320px;
-  background: #1e293b;
-  color: white;
-  padding: 25px;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 
 /* TEMA CLARO */
