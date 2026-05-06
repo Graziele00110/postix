@@ -264,3 +264,29 @@ body.light .progresso-container {
   color: #ff9a3c;
   margin: 10px auto 20px;
 }
+
+.whatsapp-box {
+  margin: 25px auto;
+  padding: 20px;
+  max-width: 420px;
+}
+
+.whatsapp-box h3 {
+  margin-bottom: 12px;
+}
+
+.whatsapp-btn {
+  display: block;
+  text-decoration: none;
+  background: #25d366;
+  color: white;
+  padding: 12px;
+  border-radius: 10px;
+  margin: 10px 0;
+  font-weight: bold;
+}
+
+.whatsapp-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
