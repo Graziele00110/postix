@@ -119,7 +119,7 @@ app.post("/login", (req, res) => {
 app.post("/admin/criar", verificarAdmin, (req, res) => {
   const { email, password, plan_months } = req.body;
 
-  if (!email || !password || !plan_months) {
+  if (!email || !password || plan_months === underfined) {
     return res.status(400).json({ error: "Email, senha e plano são obrigatórios." });
   }
 
@@ -132,7 +132,9 @@ app.post("/admin/criar", verificarAdmin, (req, res) => {
   let expiresAt;
 
   if (Number(plan_months) === 0) {
-    expiresAt = calcularExpiracaoDias(2);
+    const data = new Date();
+    data.setDate(data.getDate() + 2);
+    expiresAt = data.toISOString();
   } else {
     expiresAt = calcularExpiracao(plan_months);
   }
