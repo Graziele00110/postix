@@ -258,3 +258,9 @@ body.light .progresso-container {
 .ver-senha:hover svg {
   color: #fc6d00;
 }
+
+.info-plano {
+  font-weight: bold;
+  color: #ff9a3c;
+  margin: 10px auto 20px;
+}
