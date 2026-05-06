@@ -102,6 +102,9 @@ async function fazerLogin() {
     localStorage.setItem("postix_logado", "true");
     localStorage.setItem("postix_email", email);
     localStorage.setItem("postix_token", dados.token);
+    localStorage.setItem("postix_expires_at", dados.expires_at);
+    localStorage.setItem("postix_plan_months", dados.plan_months);
+    mostrarPlanoUsuario();
 
     loginMensagem.innerText = "";
     liberarSistema();
@@ -121,6 +124,7 @@ function sair() {
 window.addEventListener("load", () => {
   if (localStorage.getItem("postix_logado") === "true") {
     liberarSistema();
+    mostrarPlanoUsuario();
   } else {
     bloquearSistema();
   }
@@ -159,7 +163,7 @@ upload.addEventListener("change", e => {
   img.src = URL.createObjectURL(file);
 });
 
-/* PREVIEW (DIVISÃO CORRETA) */
+/* PREVIEW */
 function gerarPreview() {
   if (!imagemOriginal) {
     alert("Envie uma imagem!");
@@ -324,4 +328,28 @@ function limparTudo() {
   document.getElementById("preview").innerHTML = "";
   document.getElementById("barra").style.width = "0%";
   document.getElementById("status").innerText = "Campos limpos.";
+}
+
+function mostrarPlanoUsuario() {
+  const expiresAt = localStorage.getItem("postix_expires_at");
+  const planMonths = localStorage.getItem("postix_plan_months");
+
+  const infoPlano = document.getElementById("infoPlano");
+  if (!infoPlano || !expiresAt) return;
+
+  const hoje = new Date();
+  const vencimento = new Date(expiresAt);
+
+  const diferenca = vencimento - hoje;
+  const diasRestantes = Math.ceil(diferenca / (1000 * 60 * 60 * 24));
+
+  let nomePlano = "";
+
+  if (Number(planMonths) === 0) {
+    nomePlano = "Teste grátis de 2 dias";
+  } else {
+    nomePlano = `Plano de ${planMonths} meses`;
+  }
+
+  infoPlano.innerText = `${nomePlano} — faltam ${diasRestantes} dia(s) para expirar.`;
 }
