@@ -251,12 +251,14 @@ function gerarPreview() {
         folhaH
       });
 
-      preview.appendChild(canvas);
+      if (partes.length <= 7) {
+        preview.appendChild(canvas);
+      }
     }
   }
 
   document.getElementById("status").innerText =
-    `Preview gerado: ${partes.length} página(s).`;
+    `Preview mostrando até 7 folhas. O PDF será gerado com ${partes.length} página(s).`;
 }
 
 /* PDF */
