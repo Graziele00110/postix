@@ -116,6 +116,38 @@ app.post("/login", (req, res) => {
   });
 });
 
+//VERIFICAÇÃO DE ACESSO
+app.post("/verificar-acesso", (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ error: "Email não informado." });
+  }
+
+  db.get("SELECT email, plan_months, expires_at FROM users WHERE email = ?", [email], (err, user) => {
+    if (err) return res.status(500).json({ error: "Erro no servidor." });
+
+    if (!user) {
+      return res.status(404).json({ error: "Usuário não encontrado." });
+    }
+
+    if (planoExpirado(user.expires_at)) {
+      return res.status(403).json({
+        error: "Seu plano expirou. Renove para continuar usando o PostiX.",
+        expirado: true
+      });
+    }
+
+    res.json({
+      success: true,
+      email: user.email,
+      plan_months: user.plan_months,
+      expires_at: user.expires_at,
+      expirado: false
+    });
+  });
+});
+
 // CRIAR USUÁRIO COM PLANO
 app.post("/admin/criar", verificarAdmin, (req, res) => {
   const { email, password, plan_months } = req.body;
