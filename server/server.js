@@ -44,6 +44,12 @@ function calcularExpiracao(meses) {
   return data.toISOString();
 }
 
+function calcularExpiracaoDias(dias) {
+  const data = new Date();
+  data.setDate(data.getDate() + Number(dias));
+  return data.toISOString();
+}
+
 function planoExpirado(expiresAt) {
   if (!expiresAt) return true;
   return new Date() > new Date(expiresAt);
@@ -117,13 +123,19 @@ app.post("/admin/criar", verificarAdmin, (req, res) => {
     return res.status(400).json({ error: "Email, senha e plano são obrigatórios." });
   }
 
-  const mesesPermitidos = [3, 6, 12];
+  const planosPermitidos = [0, 3, 6, 12];
 
-  if (!mesesPermitidos.includes(Number(plan_months))) {
+  if (!planosPermitidos.includes(Number(plan_months))) {
     return res.status(400).json({ error: "Plano inválido." });
   }
 
-  const expiresAt = calcularExpiracao(plan_months);
+  let expiresAt;
+
+  if (Number(plan_months) === 0) {
+    expiresAt = calcularExpiracaoDias(2);
+  } else {
+    expiresAt = calcularExpiracao(plan_months);
+  }
 
   db.run(
     "INSERT INTO users (email, password, devices, plan_months, expires_at) VALUES (?, ?, ?, ?, ?)",
@@ -178,13 +190,19 @@ app.post("/admin/renovar/:id", verificarAdmin, (req, res) => {
   const { id } = req.params;
   const { plan_months } = req.body;
 
-  const mesesPermitidos = [3, 6, 12];
+  const mesesPermitidos = [0, 3, 6, 12];
 
   if (!mesesPermitidos.includes(Number(plan_months))) {
     return res.status(400).json({ error: "Plano inválido." });
   }
 
-  const expiresAt = calcularExpiracao(plan_months);
+  let expiresAt;
+
+  if (Number(plan_months) === 0) {
+    expiresAt = calcularExpiracaoDias(2);
+  } else {
+    expiresAt = calcularExpiracao(plan_months);
+  }
 
   db.run(
     "UPDATE users SET plan_months = ?, expires_at = ? WHERE id = ?",
