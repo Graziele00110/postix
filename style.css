@@ -290,3 +290,59 @@ body.light .progresso-container {
   opacity: 0.9;
   transform: translateY(-2px);
 }
+
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.container {
+  width: calc(100% - 20px);
+  max-width: 1100px;
+  margin: 20px auto;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+button,
+input,
+select,
+.whatsapp-btn {
+  max-width: 100%;
+}
+
+@media (max-width: 600px) {
+  body {
+    font-size: 15px;
+  }
+
+  .container {
+    margin: 10px auto;
+    padding: 15px;
+  }
+
+  .login-area {
+    width: calc(100% - 30px);
+    margin: 60px auto;
+  }
+
+  button {
+    width: 90%;
+  }
+
+  .whatsapp-box {
+    width: calc(100% - 30px);
+  }
+
+  .preview-area {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  canvas {
+    width: 100%;
+  }
+}
