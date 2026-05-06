@@ -84,14 +84,6 @@
 
     <input type="number" id="margemMm" value="5" placeholder="Margem (mm)">
 
-    <div class="campo">
-      <label>
-        Sangria
-        <span onclick="abrirPopup()" class="info">ⓘ</span>
-      </label>
-      <input type="number" id="bleedMm" value="3">
-    </div>
-
   </div>
 
   <div class="botoes">
@@ -110,15 +102,6 @@
   <div id="preview" class="preview-area glass"></div>
 
 </div>
-</div>
-
-<!-- POPUP -->
-<div id="popupOverlay" class="popup-overlay">
-  <div class="popup-box">
-    <h3>Sangria</h3>
-    <p>Área extra para evitar bordas brancas no corte.</p>
-    <button onclick="fecharPopup()">Ok</button>
-  </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
