@@ -4,7 +4,8 @@ const sqlite3 = require("sqlite3").verbose();
 const crypto = require("crypto");
 
 const app = express();
-const db = new sqlite3.Database("./db.sqlite");
+const dbPath = process.env.DB_PATH || "./db.sqlite";
+const db = new sqlite3.Database(dbPath);
 
 app.use(cors());
 app.use(express.json());
