@@ -285,7 +285,7 @@ function formatarData(dataISO) {
 async function renovarPlano(id) {
   const plano = prompt("Digite o novo plano em meses: 3, 6 ou 12");
 
-  if (!["3", "6", "12"].includes(plano)) {
+  if (!["0", "3", "6", "12"].includes(plano)) {
     alert("Plano inválido.");
     return;
   }
